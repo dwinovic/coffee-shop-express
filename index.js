@@ -11,6 +11,7 @@ import ioCookieParser from 'socket.io-cookie-parser';
 import { responseError } from './src/helpers/helpers.js';
 import CookieAuth from './src/middlewares/CookieAuth.js';
 import sizesRoute from './src/routes/sizes.js';
+import deliveriesRoute from './src/routes/deliveries.js';
 
 const app = express();
 const port = process.env.PORT_APPLICATION;
@@ -49,6 +50,7 @@ app.use(cookieParser());
 app.use(express.json());
 // Route
 app.use('/sizes', sizesRoute);
+app.use('/deliveries', deliveriesRoute);
 
 app.use('*', (req, res, next) => {
   next(new Error('Endpoint Not Found'));

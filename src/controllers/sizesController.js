@@ -48,7 +48,7 @@ const updateSize = async (req, res, next) => {
   try {
     const sizeId = req.params.id;
     const data = req.body;
-    const checkExistSize = await sizezModel.showSize('size_id', sizeId);
+    const checkExistSize = await sizezModel.showSize('size_name', data.size_name);
     if (checkExistSize.length > 0) {
       return responseError(res, 'Invalid input', 422, 'This size already exist', {});
     }
