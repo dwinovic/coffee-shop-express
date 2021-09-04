@@ -82,8 +82,15 @@ const getCategories = async (req, res, next) => {
 
 const showCategory = async (req, res, next) => {
   try {
-    const field = req.query.field || 'category_name';
+    let field = req.query.field || 'category_name';
     const fieldValue = req.query.fieldValue || ' ';
+    if (field === 'category_id') {
+      field = 'category_id';
+    } else if (field === 'category_name') {
+      field = 'category_name';
+    } else {
+      field = 'category_name';
+    }
     const category = await categoriesModel.showCategory(field, fieldValue);
     if (category.length > 0) {
       response(res, 'Success', 200, 'Category successfully loaded', category);
@@ -99,6 +106,10 @@ const updatecategory = async (req, res, next) => {
   try {
     const categoryId = req.params.id;
     const data = req.body;
+    const checkExistData = await categoriesModel.showCategory('category_id', categoryId);
+    if (checkExistData.length < 1) {
+      return responseError(res, 'Error', 404, 'the data to be updated does not exist');
+    }
     categoriesModel.updateCategory(data, categoryId)
       .then((result) => {
         response(res, 'Success', 200, 'Category successfully updated', result);
@@ -114,6 +125,10 @@ const updatecategory = async (req, res, next) => {
 const deleteCategory = async (req, res, next) => {
   try {
     const categoryId = req.params.id;
+    const checkExistData = await categoriesModel.showCategory('category_id', categoryId);
+    if (checkExistData.length < 1) {
+      return responseError(res, 'Error', 404, 'the data to be deleted does not exist');
+    }
     const checkExistRelation = await categoriesModel.showRelationCategory(categoryId);
     if (checkExistRelation.length > 0) {
       return responseError(res, 'Error', 422, 'Cant delete! Some products use this category');
