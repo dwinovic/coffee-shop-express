@@ -60,9 +60,29 @@ const updatecategory = async (req, res, next) => {
   }
 };
 
+const deleteCategory = async (req, res, next) => {
+  try {
+    const categoryId = req.params.id;
+    const checkExistRelation = await categoriesModel.showRelationCategory(categoryId);
+    if (checkExistRelation.length > 0) {
+      return responseError(res, 'Error', 422, 'Cant delete! Some products use this category');
+    }
+    categoriesModel.deleteCategory(categoryId)
+      .then((result) => {
+        response(res, 'Success', 200, 'Successfully deleted category', result);
+      })
+      .catch((err) => {
+        responseError(res, 'Error', 500, 'Failed delete category', err);
+      });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export default {
   addcategory,
   getCategories,
   showCategory,
   updatecategory,
+  deleteCategory,
 };

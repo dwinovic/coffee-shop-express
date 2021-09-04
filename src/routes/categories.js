@@ -13,6 +13,6 @@ router.post(
 )
   .get('/getcategory', categoriesController.getCategories)
   .get('/showcategory', categoriesController.showCategory)
-  .post('/updatecategory/:id', categoryValidation.updateCategoryFieldRules(), resultOfValidation, categoriesController.updatecategory);
-  // .delete('/deletecategory/:id')
+  .post('/updatecategory/:id', categoryValidation.updateCategoryFieldRules(), resultOfValidation, categoriesController.updatecategory)
+  .delete('/deletecategory/:id', categoriesController.deleteCategory);
 export default router;

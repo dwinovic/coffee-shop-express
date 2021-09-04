@@ -25,9 +25,23 @@ const updateCategory = (data, categoryId) => new Promise((resolve, reject) => {
   });
 });
 
+const showRelationCategory = (categoryId) => new Promise((resolve, reject) => {
+  connection.query(`SELECT * FROM products WHERE category_id = ${categoryId}`, (err, result) => {
+    promiseResolveReject(resolve, reject, err, result);
+  });
+});
+
+const deleteCategory = (categoryId) => new Promise((resolve, reject) => {
+  connection.query(`DELETE FROM categories WHERE category_id = ${categoryId}`, (err, result) => {
+    promiseResolveReject(resolve, reject, err, result);
+  });
+});
+
 export default {
   addcategory,
   showCategory,
   getCategories,
   updateCategory,
+  showRelationCategory,
+  deleteCategory,
 };
