@@ -4,10 +4,6 @@ import { response, responseError } from '../helpers/helpers.js';
 const addDeliveries = async (req, res, next) => {
   try {
     const data = req.body;
-    const checkExistDeliveries = await deliveriesModel.showDeliveries('delivery_name', data.delivery_name);
-    if (checkExistDeliveries.length > 0) {
-      return responseError(res, 'Invalid input', 422, 'This delivery already exist');
-    }
     await deliveriesModel.addDeliveries(data)
       .then((result) => {
         response(res, 'Success', 200, 'Successfully added data deliveries', result);

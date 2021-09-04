@@ -8,7 +8,7 @@ const addDeliveries = (data) => new Promise((resolve, reject) => {
 });
 
 const showDeliveries = (field, fieldValue) => new Promise((resolve, reject) => {
-  connection.query(`SELECT * FROM deliveries WHERE ${field} like '%${fieldValue}%'`, (err, result) => {
+  connection.query(`SELECT * FROM deliveries WHERE ${field} = '${fieldValue}'`, (err, result) => {
     promiseResolveReject(resolve, reject, err, result);
   });
 });

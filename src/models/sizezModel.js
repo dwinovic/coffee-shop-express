@@ -8,7 +8,7 @@ const addSize = (data) => new Promise((resolve, reject) => {
 });
 
 const showSize = (field, fieldValue) => new Promise((resolve, reject) => {
-  connection.query(`SELECT * FROM sizes WHERE ${field} like '%${fieldValue}%'`, (err, result) => {
+  connection.query(`SELECT * FROM sizes WHERE ${field} = '${fieldValue}'`, (err, result) => {
     promiseResolveReject(resolve, reject, err, result);
   });
 });
