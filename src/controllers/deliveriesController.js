@@ -71,11 +71,10 @@ const getDeliveries = async (req, res, next) => {
         deliveries = await deliveriesModel.getDeliveries(search, order, fieldOrder, start, limit);
         return responsePagination(res, 'success', 200, 'data locations', deliveries, pagination);
       }
-    } else {
-      response(res, 'Not found', 200, 'Deliveries not found');
+      deliveries = await deliveriesModel.getDeliveries(search, order, fieldOrder);
+      return response(res, 'success', 200, 'data locations', deliveries);
     }
-    // const allDeliveries = await deliveriesModel.getDeliveries();
-    // response(res, 'Success', 200, 'All deliveries successfully loaded', allDeliveries);
+    response(res, 'Not found', 200, 'Deliveries not found');
   } catch (err) {
     next(err);
   }
