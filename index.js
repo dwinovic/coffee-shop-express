@@ -10,8 +10,6 @@ import { createServer } from 'http';
 import ioCookieParser from 'socket.io-cookie-parser';
 import { responseError } from './src/helpers/helpers.js';
 import CookieAuth from './src/middlewares/CookieAuth.js';
-import sizesRoute from './src/routes/sizes.js';
-import deliveriesRoute from './src/routes/deliveries.js';
 import categoriesRoute from './src/routes/categories.js';
 
 const app = express();
@@ -50,8 +48,7 @@ app.use((req, res, next) => {
 app.use(cookieParser());
 app.use(express.json());
 // Route
-app.use('/sizes', sizesRoute);
-app.use('/deliveries', deliveriesRoute);
+
 app.use('/categories', categoriesRoute);
 
 app.use('*', (req, res, next) => {

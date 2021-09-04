@@ -7,10 +7,22 @@ const addcategory = (data) => new Promise((resolve, reject) => {
   });
 });
 
-const getCategories = () => new Promise((resolve, reject) => {
-  connection.query('SELECT * FROM categories', (err, result) => {
-    promiseResolveReject(resolve, reject, err, result);
-  });
+const getCategories = (search, order, fieldOrder, start = '', limit = '') => new Promise((resolve, reject) => {
+  if (start === '' && limit === '') {
+    connection.query(
+      `SELECT * FROM categories WHERE category_name LIKE '%${search}%' ORDER BY ${fieldOrder} ${order}`,
+      (err, result) => {
+        promiseResolveReject(resolve, reject, err, result);
+      },
+    );
+  } else {
+    connection.query(
+      `SELECT * FROM categories WHERE category_name LIKE '%${search}%' ORDER BY ${fieldOrder} ${order} LIMIT ${start}, ${limit}`,
+      (err, result) => {
+        promiseResolveReject(resolve, reject, err, result);
+      },
+    );
+  }
 });
 
 const showCategory = (field, fieldValue) => new Promise((resolve, reject) => {
