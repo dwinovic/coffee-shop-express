@@ -19,8 +19,15 @@ const showCategory = (field, fieldValue) => new Promise((resolve, reject) => {
   });
 });
 
+const updateCategory = (data, categoryId) => new Promise((resolve, reject) => {
+  connection.query(`UPDATE categories SET ? WHERE category_id = ${categoryId}`, data, (err, result) => {
+    promiseResolveReject(resolve, reject, err, result);
+  });
+});
+
 export default {
   addcategory,
   showCategory,
   getCategories,
+  updateCategory,
 };

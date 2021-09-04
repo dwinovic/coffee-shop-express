@@ -11,5 +11,8 @@ router.post(
   resultOfValidation,
   categoriesController.addcategory,
 )
-  .get('/getcategory', categoriesController.getCategories);
+  .get('/getcategory', categoriesController.getCategories)
+  .get('/showcategory', categoriesController.showCategory)
+  .post('/updatecategory/:id', categoryValidation.updateCategoryFieldRules(), resultOfValidation, categoriesController.updatecategory);
+  // .delete('/deletecategory/:id')
 export default router;
