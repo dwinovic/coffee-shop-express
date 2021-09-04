@@ -5,9 +5,16 @@ import resultOfValidation from '../validations/ResultOfValidation.js';
 
 const router = Express.Router();
 
-router.post('/addsizes', sizeValidation.addSizeFiedlRules(), resultOfValidation, sizesController.addSize)
-  .get('/getsizes', sizesController.getSize)
+router
+  .post('/addsizes', sizeValidation.addSizeFiedlRules(), resultOfValidation, sizesController.addSize)
+  .get('/getsizes', sizeValidation.rulesRead(), resultOfValidation, sizesController.getSize)
   .get('/showsize', sizesController.showSize)
-  .post('/updatesize/:id', sizeValidation.updateSizeFieldRules(), resultOfValidation, sizesController.updateSize)
-  .delete('/deletesize/:id', sizesController.deleteSize);
+  .post(
+    '/updatesize/:id',
+    sizeValidation.rulesUpdateAndDelete(),
+    sizeValidation.updateSizeFieldRules(),
+    resultOfValidation,
+    sizesController.updateSize,
+  )
+  .delete('/deletesize/:id', sizeValidation.rulesUpdateAndDelete(), resultOfValidation, sizesController.deleteSize);
 export default router;

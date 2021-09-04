@@ -82,8 +82,15 @@ const getDeliveries = async (req, res, next) => {
 
 const showDeliveries = async (req, res, next) => {
   try {
-    const field = req.query.field || 'delivery_name';
+    let field = req.query.field || 'delivery_name';
     const fieldValue = req.query.fieldValue || ' ';
+    if (field === 'delivery_id') {
+      field = 'delivery_id';
+    } else if (field === 'delivery_name') {
+      field = 'delivery_name';
+    } else {
+      field = 'delivery_name';
+    }
     const delivery = await deliveriesModel.showDeliveries(field, fieldValue);
     if (delivery.length > 0) {
       response(res, 'Success', 200, 'delivery successfully loaded', delivery[0]);
@@ -99,6 +106,10 @@ const updateDelivery = async (req, res, next) => {
   try {
     const deliveryId = req.params.id;
     const data = req.body;
+    const checkExistData = await deliveriesModel.showDeliveries('delivery_id', deliveryId);
+    if (checkExistData.length < 1) {
+      return responseError(res, 'Error', 404, 'the data to be updated does not exist');
+    }
     deliveriesModel.updateDelivery(deliveryId, data)
       .then((result) => {
         response(res, 'Success', 200, 'Data Deliveries successfullly updated', result);
@@ -114,6 +125,10 @@ const updateDelivery = async (req, res, next) => {
 const deleteSize = async (req, res, next) => {
   try {
     const deliveryId = req.params.id;
+    const checkExistData = await deliveriesModel.showDeliveries('delivery_id', deliveryId);
+    if (checkExistData.length < 1) {
+      return responseError(res, 'Error', 404, 'the data to be deleted does not exist');
+    }
     const checkExistRelation = await deliveriesModel.showRelationDelivery(deliveryId);
     if (checkExistRelation.length > 0) {
       return responseError(res, 'Error', 422, 'Cant delete! Some products use this delivery');

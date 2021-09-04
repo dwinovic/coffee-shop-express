@@ -82,8 +82,15 @@ const getSize = async (req, res, next) => {
 
 const showSize = async (req, res, next) => {
   try {
-    const field = req.query.field || 'size_name';
+    let field = req.query.field || 'size_name';
     const fieldValue = req.query.fieldValue || ' ';
+    if (field === 'size_id') {
+      field = 'size_id';
+    } else if (field === 'size_name') {
+      field = 'size_name';
+    } else {
+      field = 'size_name';
+    }
     const size = await sizezModel.showSize(field, fieldValue);
     if (size.length > 0) {
       response(res, 'Success', 200, 'Size successfully loaded', size[0]);
@@ -99,6 +106,10 @@ const updateSize = async (req, res, next) => {
   try {
     const sizeId = req.params.id;
     const data = req.body;
+    const checkExistData = await sizezModel.showSize('size_id', sizeId);
+    if (checkExistData.length < 1) {
+      return responseError(res, 'Error', 404, 'the data to be updated does not exist');
+    }
     const checkExistSize = await sizezModel.showSize('size_name', data.size_name);
     if (checkExistSize.length > 0) {
       return responseError(res, 'Invalid input', 422, 'This size already exist', {});
@@ -118,6 +129,10 @@ const updateSize = async (req, res, next) => {
 const deleteSize = async (req, res, next) => {
   try {
     const sizeId = req.params.id;
+    const checkExistData = await sizezModel.showSize('size_id', sizeId);
+    if (checkExistData.length < 1) {
+      return responseError(res, 'Error', 404, 'the data to be deleted does not exist');
+    }
     const checkExistRelation = await sizezModel.showRelationSize(sizeId);
     if (checkExistRelation.length > 0) {
       return responseError(res, 'Error', 422, 'Cant delete! Some products use this size');
