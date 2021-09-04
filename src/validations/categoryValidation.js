@@ -24,13 +24,12 @@ const updateCategoryFieldRules = () => [
     .custom(async (value) => {
       const checkExistCategories = await categoriesModel.showCategory('category_name', value);
       if (checkExistCategories.length > 0) {
-        if (checkExistCategories[0].category_name === value) {
-          return true;
-        }
+        // if (checkExistCategories[0].category_name === value) {
+        // return true;
+        // }
         throw new Error('This category already available');
-      } else {
-        return true;
       }
+      return true;
     }),
 ];
 
