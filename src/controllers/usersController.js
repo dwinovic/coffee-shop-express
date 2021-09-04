@@ -246,8 +246,12 @@ const refreshToken = async (req, res, next) => {
 const profile = async (req, res, next) => {
   try {
     const getProfile = await usersModel.checkExistUser(req.userLogin.user_id, 'user_id');
-    delete getProfile[0].password;
-    response(res, 'Success', 200, 'User profile', getProfile[0]);
+    if (getProfile.length > 0) {
+      delete getProfile[0].password;
+      response(res, 'Success', 200, 'User profile', getProfile[0]);
+    } else {
+      responseError(res, 'Not Found', 404, 'User not found', {});
+    }
   } catch (error) {
     next(error);
   }
@@ -258,7 +262,7 @@ const getStatus = async (req, res, next) => {
     const dataStatus = await usersModel.checkExistUser(req.params.id, 'user_id');
     if (dataStatus.length > 0) {
       delete dataStatus[0].password;
-      response(res, 'Data Status', 200, 'Data status Online/Offline', { online: dataStatus[0] });
+      response(res, 'Data Status', 200, 'Data status Online/Offline', dataStatus[0]);
     } else {
       response(res, 'failed', 404, 'user not found', {});
     }
