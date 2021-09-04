@@ -1,5 +1,5 @@
 import sizezModel from '../models/sizezModel.js';
-import { response, responseError } from '../helpers/helpers.js';
+import { response, responseError, responsePagination } from '../helpers/helpers.js';
 
 const addSize = async (req, res, next) => {
   try {
@@ -17,9 +17,64 @@ const addSize = async (req, res, next) => {
 };
 
 const getSize = async (req, res, next) => {
+  const StatusPagination = req.query.pagination || 'on';
+  const search = req.query.search || '';
+  let order = req.query.order || '';
+  if (order.toUpperCase() === 'ASC') {
+    order = 'ASC';
+  } else if (order.toUpperCase() === 'DESC') {
+    order = 'DESC';
+  } else {
+    order = 'DESC';
+  }
+  let { fieldOrder } = req.query;
+  if (fieldOrder) {
+    if (fieldOrder.toLowerCase() === 'size_name') {
+      fieldOrder = 'size_name';
+    } else {
+      fieldOrder = 'size_id';
+    }
+  } else {
+    fieldOrder = 'size_id';
+  }
   try {
-    const allSize = await sizezModel.getSize();
-    response(res, 'Success', 200, 'All size successfully loaded', allSize);
+    let sizes;
+    let pagination;
+    const allRecord = await sizezModel.getSize(search, order, fieldOrder);
+    if (allRecord.length > 0) {
+      const limit = req.query.limit || 5;
+      const pages = Math.ceil(allRecord.length / limit);
+      let page = req.query.page || 1;
+      let nextPage = parseInt(page, 10) + 1;
+      let prevPage = parseInt(page, 10) - 1;
+      if (nextPage > pages) {
+        nextPage = pages;
+      }
+      if (prevPage < 1) {
+        prevPage = 1;
+      }
+      if (page > pages) {
+        page = pages;
+      } else if (page < 1) {
+        page = 1;
+      }
+      const start = (page - 1) * limit;
+      pagination = {
+        countData: allRecord.length,
+        pages,
+        limit: parseInt(limit, 10),
+        curentPage: parseInt(page, 10),
+        nextPage,
+        prevPage,
+      };
+      if (StatusPagination === 'on') {
+        sizes = await sizezModel.getSize(search, order, fieldOrder, start, limit);
+        return responsePagination(res, 'success', 200, 'data locations', sizes, pagination);
+      }
+      sizes = await sizezModel.getSize(search, order, fieldOrder);
+      return response(res, 'success', 200, 'data locations', sizes);
+    }
+    response(res, 'Not found', 200, 'Deliveries not found');
   } catch (err) {
     next(err);
   }
