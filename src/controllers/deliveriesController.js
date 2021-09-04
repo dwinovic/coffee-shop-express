@@ -1,13 +1,9 @@
 import deliveriesModel from '../models/deliveriesModel.js';
-import { response, responseError } from '../helpers/helpers.js';
+import { response, responseError, responsePagination } from '../helpers/helpers.js';
 
 const addDeliveries = async (req, res, next) => {
   try {
     const data = req.body;
-    const checkExistDeliveries = await deliveriesModel.showDeliveries('delivery_name', data.delivery_name);
-    if (checkExistDeliveries.length > 0) {
-      return responseError(res, 'Invalid input', 422, 'This delivery already exist');
-    }
     await deliveriesModel.addDeliveries(data)
       .then((result) => {
         response(res, 'Success', 200, 'Successfully added data deliveries', result);
@@ -21,9 +17,64 @@ const addDeliveries = async (req, res, next) => {
 };
 
 const getDeliveries = async (req, res, next) => {
+  const StatusPagination = req.query.pagination || 'on';
+  const search = req.query.search || '';
+  let order = req.query.order || '';
+  if (order.toUpperCase() === 'ASC') {
+    order = 'ASC';
+  } else if (order.toUpperCase() === 'DESC') {
+    order = 'DESC';
+  } else {
+    order = 'DESC';
+  }
+  let { fieldOrder } = req.query;
+  if (fieldOrder) {
+    if (fieldOrder.toLowerCase() === 'delivery_name') {
+      fieldOrder = 'delivery_name';
+    } else {
+      fieldOrder = 'delivery_id';
+    }
+  } else {
+    fieldOrder = 'delivery_id';
+  }
   try {
-    const allDeliveries = await deliveriesModel.getDeliveries();
-    response(res, 'Success', 200, 'All deliveries successfully loaded', allDeliveries);
+    let deliveries;
+    let pagination;
+    const allRecord = await deliveriesModel.getDeliveries(search, order, fieldOrder);
+    if (allRecord.length > 0) {
+      const limit = req.query.limit || 5;
+      const pages = Math.ceil(allRecord.length / limit);
+      let page = req.query.page || 1;
+      let nextPage = parseInt(page, 10) + 1;
+      let prevPage = parseInt(page, 10) - 1;
+      if (nextPage > pages) {
+        nextPage = pages;
+      }
+      if (prevPage < 1) {
+        prevPage = 1;
+      }
+      if (page > pages) {
+        page = pages;
+      } else if (page < 1) {
+        page = 1;
+      }
+      const start = (page - 1) * limit;
+      pagination = {
+        countData: allRecord.length,
+        pages,
+        limit: parseInt(limit, 10),
+        curentPage: parseInt(page, 10),
+        nextPage,
+        prevPage,
+      };
+      if (StatusPagination === 'on') {
+        deliveries = await deliveriesModel.getDeliveries(search, order, fieldOrder, start, limit);
+        return responsePagination(res, 'success', 200, 'data locations', deliveries, pagination);
+      }
+      deliveries = await deliveriesModel.getDeliveries(search, order, fieldOrder);
+      return response(res, 'success', 200, 'data locations', deliveries);
+    }
+    response(res, 'Not found', 200, 'Deliveries not found');
   } catch (err) {
     next(err);
   }
@@ -31,8 +82,15 @@ const getDeliveries = async (req, res, next) => {
 
 const showDeliveries = async (req, res, next) => {
   try {
-    const field = req.query.field || 'delivery_name';
+    let field = req.query.field || 'delivery_name';
     const fieldValue = req.query.fieldValue || ' ';
+    if (field === 'delivery_id') {
+      field = 'delivery_id';
+    } else if (field === 'delivery_name') {
+      field = 'delivery_name';
+    } else {
+      field = 'delivery_name';
+    }
     const delivery = await deliveriesModel.showDeliveries(field, fieldValue);
     if (delivery.length > 0) {
       response(res, 'Success', 200, 'delivery successfully loaded', delivery[0]);
@@ -48,9 +106,13 @@ const updateDelivery = async (req, res, next) => {
   try {
     const deliveryId = req.params.id;
     const data = req.body;
+    const checkExistData = await deliveriesModel.showDeliveries('delivery_id', deliveryId);
+    if (checkExistData.length < 1) {
+      return responseError(res, 'Error', 404, 'the data to be updated does not exist');
+    }
     const checkExistDeliveries = await deliveriesModel.showDeliveries('delivery_name', data.delivery_name);
     if (checkExistDeliveries.length > 0) {
-      return responseError(res, 'Invalid input', 422, 'This delivery already exist', {});
+      return responseError(res, 'Error', 422, 'This delivery already avaiable');
     }
     deliveriesModel.updateDelivery(deliveryId, data)
       .then((result) => {
@@ -67,6 +129,10 @@ const updateDelivery = async (req, res, next) => {
 const deleteSize = async (req, res, next) => {
   try {
     const deliveryId = req.params.id;
+    const checkExistData = await deliveriesModel.showDeliveries('delivery_id', deliveryId);
+    if (checkExistData.length < 1) {
+      return responseError(res, 'Error', 404, 'the data to be deleted does not exist');
+    }
     const checkExistRelation = await deliveriesModel.showRelationDelivery(deliveryId);
     if (checkExistRelation.length > 0) {
       return responseError(res, 'Error', 422, 'Cant delete! Some products use this delivery');

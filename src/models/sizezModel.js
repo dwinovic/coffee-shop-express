@@ -8,15 +8,27 @@ const addSize = (data) => new Promise((resolve, reject) => {
 });
 
 const showSize = (field, fieldValue) => new Promise((resolve, reject) => {
-  connection.query(`SELECT * FROM sizes WHERE ${field} like '%${fieldValue}%'`, (err, result) => {
+  connection.query(`SELECT * FROM sizes WHERE ${field} = '${fieldValue}'`, (err, result) => {
     promiseResolveReject(resolve, reject, err, result);
   });
 });
 
-const getSize = () => new Promise((resolve, reject) => {
-  connection.query('SELECT * FROM sizes', (err, result) => {
-    promiseResolveReject(resolve, reject, err, result);
-  });
+const getSize = (search, order, fieldOrder, start = '', limit = '') => new Promise((resolve, reject) => {
+  if (start === '' && limit === '') {
+    connection.query(
+      `SELECT * FROM sizes WHERE size_name LIKE '%${search}%' ORDER BY ${fieldOrder} ${order}`,
+      (err, result) => {
+        promiseResolveReject(resolve, reject, err, result);
+      },
+    );
+  } else {
+    connection.query(
+      `SELECT * FROM sizes WHERE size_name LIKE '%${search}%' ORDER BY ${fieldOrder} ${order} LIMIT ${start}, ${limit}`,
+      (err, result) => {
+        promiseResolveReject(resolve, reject, err, result);
+      },
+    );
+  }
 });
 
 const updateSize = (sizeId, data) => new Promise((resolve, reject) => {
