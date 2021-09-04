@@ -110,6 +110,10 @@ const updateDelivery = async (req, res, next) => {
     if (checkExistData.length < 1) {
       return responseError(res, 'Error', 404, 'the data to be updated does not exist');
     }
+    const checkExistDeliveries = await deliveriesModel.showDeliveries('delivery_name', data);
+    if (checkExistDeliveries.length > 0) {
+      return responseError(res, 'Error', 422, 'This delivery already avaiable');
+    }
     deliveriesModel.updateDelivery(deliveryId, data)
       .then((result) => {
         response(res, 'Success', 200, 'Data Deliveries successfullly updated', result);
