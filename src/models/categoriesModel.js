@@ -7,6 +7,12 @@ const addcategory = (data) => new Promise((resolve, reject) => {
   });
 });
 
+const getCategories = () => new Promise((resolve, reject) => {
+  connection.query('SELECT * FROM categories', (err, result) => {
+    promiseResolveReject(resolve, reject, err, result);
+  });
+});
+
 const showCategory = (field, fieldValue) => new Promise((resolve, reject) => {
   connection.query(`SELECT * FROM categories WHERE ${field} = '${fieldValue}'`, (err, result) => {
     promiseResolveReject(resolve, reject, err, result);
@@ -16,4 +22,5 @@ const showCategory = (field, fieldValue) => new Promise((resolve, reject) => {
 export default {
   addcategory,
   showCategory,
+  getCategories,
 };

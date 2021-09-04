@@ -10,5 +10,6 @@ router.post(
   categoryValidation.addCategoryFieldRules(),
   resultOfValidation,
   categoriesController.addcategory,
-);
+)
+  .get('/getcategory', categoriesController.getCategories);
 export default router;
