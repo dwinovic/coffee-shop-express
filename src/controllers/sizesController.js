@@ -4,10 +4,6 @@ import { response, responseError } from '../helpers/helpers.js';
 const addSize = async (req, res, next) => {
   try {
     const data = req.body;
-    const checkExistSize = await sizezModel.showSize('size_name', data.size_name);
-    if (checkExistSize.length > 0) {
-      return responseError(res, 'Invalid input', 422, 'This size already exist');
-    }
     await sizezModel.addSize(data)
       .then((result) => {
         response(res, 'Success', 200, 'Successfully added data sizes', result);
