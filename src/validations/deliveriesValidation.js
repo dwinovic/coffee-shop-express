@@ -19,7 +19,13 @@ const addDeliveriesFiedlRules = () => [
 const updateDeliveriesFieldRules = () => [
   body('delivery_name')
     .notEmpty()
-    .withMessage('Please input delivery name'),
+    .withMessage('Please input delivery name')
+    .custom(async (value) => {
+      const checkExistDeliveries = await deliveriesModel.showDeliveries('delivery_name', value);
+      if (checkExistDeliveries.length > 0) {
+        throw new Error('This delivery alreade avaiable');
+      }
+    }),
 ];
 
 export default {

@@ -1,5 +1,5 @@
 import deliveriesModel from '../models/deliveriesModel.js';
-import { response, responseError } from '../helpers/helpers.js';
+import { response, responseError, responsePagination } from '../helpers/helpers.js';
 
 const addDeliveries = async (req, res, next) => {
   try {
@@ -17,9 +17,65 @@ const addDeliveries = async (req, res, next) => {
 };
 
 const getDeliveries = async (req, res, next) => {
+  const StatusPagination = req.query.pagination || 'on';
+  const search = req.query.search || '';
+  let order = req.query.order || '';
+  if (order.toUpperCase() === 'ASC') {
+    order = 'ASC';
+  } else if (order.toUpperCase() === 'DESC') {
+    order = 'DESC';
+  } else {
+    order = 'DESC';
+  }
+  let { fieldOrder } = req.query;
+  if (fieldOrder) {
+    if (fieldOrder.toLowerCase() === 'delivery_name') {
+      fieldOrder = 'delivery_name';
+    } else {
+      fieldOrder = 'delivery_id';
+    }
+  } else {
+    fieldOrder = 'delivery_id';
+  }
   try {
-    const allDeliveries = await deliveriesModel.getDeliveries();
-    response(res, 'Success', 200, 'All deliveries successfully loaded', allDeliveries);
+    let deliveries;
+    let pagination;
+    const allRecord = await deliveriesModel.getDeliveries(search, order, fieldOrder);
+    if (allRecord.length > 0) {
+      const limit = req.query.limit || 5;
+      const pages = Math.ceil(allRecord.length / limit);
+      let page = req.query.page || 1;
+      let nextPage = parseInt(page, 10) + 1;
+      let prevPage = parseInt(page, 10) - 1;
+      if (nextPage > pages) {
+        nextPage = pages;
+      }
+      if (prevPage < 1) {
+        prevPage = 1;
+      }
+      if (page > pages) {
+        page = pages;
+      } else if (page < 1) {
+        page = 1;
+      }
+      const start = (page - 1) * limit;
+      pagination = {
+        countData: allRecord.length,
+        pages,
+        limit: parseInt(limit, 10),
+        curentPage: parseInt(page, 10),
+        nextPage,
+        prevPage,
+      };
+      if (StatusPagination === 'on') {
+        deliveries = await deliveriesModel.getDeliveries(search, order, fieldOrder, start, limit);
+        return responsePagination(res, 'success', 200, 'data locations', deliveries, pagination);
+      }
+    } else {
+      response(res, 'Not found', 200, 'Deliveries not found');
+    }
+    // const allDeliveries = await deliveriesModel.getDeliveries();
+    // response(res, 'Success', 200, 'All deliveries successfully loaded', allDeliveries);
   } catch (err) {
     next(err);
   }
@@ -44,10 +100,6 @@ const updateDelivery = async (req, res, next) => {
   try {
     const deliveryId = req.params.id;
     const data = req.body;
-    const checkExistDeliveries = await deliveriesModel.showDeliveries('delivery_name', data.delivery_name);
-    if (checkExistDeliveries.length > 0) {
-      return responseError(res, 'Invalid input', 422, 'This delivery already exist', {});
-    }
     deliveriesModel.updateDelivery(deliveryId, data)
       .then((result) => {
         response(res, 'Success', 200, 'Data Deliveries successfullly updated', result);

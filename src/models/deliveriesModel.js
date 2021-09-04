@@ -13,10 +13,22 @@ const showDeliveries = (field, fieldValue) => new Promise((resolve, reject) => {
   });
 });
 
-const getDeliveries = () => new Promise((resolve, reject) => {
-  connection.query('SELECT * FROM deliveries', (err, result) => {
-    promiseResolveReject(resolve, reject, err, result);
-  });
+const getDeliveries = (search, order, fieldOrder, start = '', limit = '') => new Promise((resolve, reject) => {
+  if (limit === '' && start === '') {
+    connection.query(
+      `SELECT * FROM deliveries WHERE delivery_name LIKE '%${search}%' ORDER BY ${fieldOrder} ${order}`,
+      (err, result) => {
+        promiseResolveReject(resolve, reject, err, result);
+      },
+    );
+  } else {
+    connection.query(
+      `SELECT * FROM deliveries WHERE delivery_name LIKE '%${search}%' ORDER BY ${fieldOrder} ${order} LIMIT ${start}, ${limit}`,
+      (err, result) => {
+        promiseResolveReject(resolve, reject, err, result);
+      },
+    );
+  }
 });
 
 const updateDelivery = (deiveryId, data) => new Promise((resolve, reject) => {
