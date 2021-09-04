@@ -112,7 +112,7 @@ const updatecategory = async (req, res, next) => {
     }
     const checkExistCategories = await categoriesModel.showCategory('category_name', data.category_name);
     if (checkExistCategories.length > 0) {
-      responseError(res, 'Invalid Input', 422, 'This category already available');
+      return responseError(res, 'Invalid Input', 422, 'This category already available');
     }
     categoriesModel.updateCategory(data, categoryId)
       .then((result) => {
