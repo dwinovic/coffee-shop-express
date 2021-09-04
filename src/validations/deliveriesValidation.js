@@ -23,8 +23,14 @@ const updateDeliveriesFieldRules = () => [
     .custom(async (value) => {
       const checkExistDeliveries = await deliveriesModel.showDeliveries('delivery_name', value);
       if (checkExistDeliveries.length > 0) {
+        // console.log(checkExistDeliveries[0].delivery_name);
+        // console.log(value);
+        // if (checkExistDeliveries[0].delivery_name === value) {
+        //   return true;
+        // }
         throw new Error('This delivery alreade avaiable');
       }
+      return true;
     }),
 ];
 
