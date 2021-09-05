@@ -14,6 +14,7 @@ import categoriesRoute from './src/routes/categories.js';
 import sizesRoute from './src/routes/sizes.js';
 import deliveriesRoute from './src/routes/deliveries.js';
 import usersRoute from './src/routes/users.js';
+import productsRoute from './src/routes/products.js';
 
 const app = express();
 const port = process.env.PORT_APPLICATION;
@@ -55,6 +56,7 @@ app.use('/categories', categoriesRoute);
 app.use('/sizes', sizesRoute);
 app.use('/deliveries', deliveriesRoute);
 app.use('/users', usersRoute);
+app.use('/products', productsRoute);
 
 app.use('*', (req, res, next) => {
   next(new Error('Endpoint Not Found'));
