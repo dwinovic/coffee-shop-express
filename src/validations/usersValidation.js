@@ -18,7 +18,7 @@ const rulesRegister = () => [
     .isNumeric()
     .withMessage('phone number must be number')
     .bail()
-    .isLength({ min: 10, max: 15 })
+    .isLength({ min: 11, max: 13 })
     .withMessage('phone number must be more than 10 and less than 15 digits'),
 ];
 
