@@ -83,7 +83,7 @@ const verifEmail = (token, name) => `
                 <p class="text-announcement">Reset Password</p>
                 <p class="text-description">Hi ${name}! Use the link below to reset your password and start buy drink.
                 </p>
-                <a target="_blank" href="${process.env.URL_FRONTEND}/auth/forgot-password/${token}" class="button-verify">Reset Password</a>
+                <a target="_blank" href="${process.env.URL_FRONTEND}/auth/reset-password/${token}" class="button-verify">Reset Password</a>
             </div>
         </div>
     </div>
