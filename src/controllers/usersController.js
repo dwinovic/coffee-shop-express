@@ -115,7 +115,11 @@ const logout = (req, res, next) => {
       if (error) {
         next(error);
       } else {
-        res.clearCookie('authCoffeeShop');
+        res.clearCookie('authCoffeeShop', {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'none',
+        });
         response(res, 'Logout', 200, 'Logout success', []);
       }
     });
