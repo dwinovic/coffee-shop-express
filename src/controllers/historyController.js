@@ -4,6 +4,7 @@ import historyModel from '../models/historyModel.js';
 const getHistory = async (req, res, next) => {
 //   let userId = 8;
 //   const roles = 'member';
+  const search = req.query.search || '';
   let userId = req.userLogin.user_id;
   const { roles } = req.userLogin;
   if (roles === 'admin') {
@@ -21,7 +22,7 @@ const getHistory = async (req, res, next) => {
   try {
     let histories;
     let pagination;
-    const allRecord = await historyModel.getHistory(userId, order);
+    const allRecord = await historyModel.getHistory(search, userId, order);
     if (allRecord.length > 0) {
       const limit = req.query.limit || 5;
       const pages = Math.ceil(allRecord.length / limit);
@@ -49,10 +50,10 @@ const getHistory = async (req, res, next) => {
         prevPage,
       };
       if (StatusPagination === 'on') {
-        histories = await historyModel.getHistory(userId, order, start, limit);
+        histories = await historyModel.getHistory(search, userId, order, start, limit);
         return responsePagination(res, 'success', 200, 'Data histories', histories, pagination);
       }
-      histories = await historyModel.getHistory(userId, order);
+      histories = await historyModel.getHistory(search, userId, order);
       return response(res, 'success', 200, 'Data histories', histories);
     }
     response(res, 'Not found', 200, 'Deliveries not found');

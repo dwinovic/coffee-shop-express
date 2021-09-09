@@ -2,7 +2,7 @@
 import connection from '../configs/db.js';
 import { promiseResolveReject } from '../helpers/helpers.js';
 
-const getHistory = (userId, order, start = '', limit = '') => new Promise((resolve, reject) => {
+const getHistory = (search, userId, order, start = '', limit = '') => new Promise((resolve, reject) => {
   if (userId === 0) {
     if (start === '' && limit === '') {
       connection.query(
