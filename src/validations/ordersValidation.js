@@ -1,4 +1,4 @@
-import { body, validationResult } from 'express-validator';
+import { body, param, validationResult } from 'express-validator';
 import { responseError } from '../helpers/helpers.js';
 
 const validateResult = (req, res, next) => {
@@ -44,9 +44,21 @@ const rulesCreateOrder = () => [
     .toInt(),
 ];
 
+const rulesReadUpdateDelete = () => [
+  param('id')
+    .isNumeric()
+    .withMessage('id must be number')
+    .bail()
+    .isInt({ min: 1 })
+    .withMessage('id must be more than 0'),
+];
+
 const validate = (method) => {
   if (method === 'create') {
     return [rulesCreateOrder(), validateResult];
+  }
+  if (method === 'delete') {
+    return [rulesReadUpdateDelete(), validateResult];
   }
 };
 

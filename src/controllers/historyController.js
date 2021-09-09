@@ -1,4 +1,4 @@
-import { response, responsePagination } from '../helpers/helpers.js';
+import { response, responsePagination, responseError } from '../helpers/helpers.js';
 import historyModel from '../models/historyModel.js';
 
 const getHistory = async (req, res, next) => {
@@ -56,12 +56,29 @@ const getHistory = async (req, res, next) => {
       histories = await historyModel.getHistory(search, userId, order);
       return response(res, 'success', 200, 'Data histories', histories);
     }
-    response(res, 'Not found', 200, 'Deliveries not found');
+    response(res, 'Not found', 200, 'Deliveries not found', allRecord);
   } catch (err) {
     next(err);
   }
 };
 
+const deleteHistory = async (req, res, next) => {
+  try {
+    const checkExistOrder = await historyModel.checkExistOrder(req.params.id, 'order_id');
+    if (checkExistOrder.length > 0) {
+      const deleteDataHistory = await historyModel.updateOrder({ deleted: 1 }, req.params.id);
+      if (deleteDataHistory.affectedRows) {
+        response(res, 'success', 200, 'successfully deleted history data', {});
+      }
+    } else {
+      responseError(res, 'Not found', 404, 'Data history not found', {});
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
 export default {
   getHistory,
+  deleteHistory,
 };

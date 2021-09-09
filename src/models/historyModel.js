@@ -36,6 +36,20 @@ const getHistory = (search, userId, order, start = '', limit = '') => new Promis
   }
 });
 
+const checkExistOrder = (fieldValue, field) => new Promise((resolve, reject) => {
+  connection.query(`SELECT * FROM orders where ${field} = ?`, fieldValue, (error, result) => {
+    promiseResolveReject(resolve, reject, error, result);
+  });
+});
+
+const updateOrder = (data, id) => new Promise((resolve, reject) => {
+  connection.query('UPDATE orders set ? where order_id = ?', [data, id], (error, result) => {
+    promiseResolveReject(resolve, reject, error, result);
+  });
+});
+
 export default {
   getHistory,
+  checkExistOrder,
+  updateOrder,
 };
