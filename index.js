@@ -16,6 +16,7 @@ import deliveriesRoute from './src/routes/deliveries.js';
 import usersRoute from './src/routes/users.js';
 import productsRoute from './src/routes/products.js';
 import ordersRoute from './src/routes/orders.js';
+import historyRoute from './src/routes/history.js';
 
 const app = express();
 const port = process.env.PORT_APPLICATION;
@@ -59,6 +60,7 @@ app.use('/deliveries', deliveriesRoute);
 app.use('/users', usersRoute);
 app.use('/products', productsRoute);
 app.use('/orders', ordersRoute);
+app.use('/history', historyRoute);
 
 app.use('*', (req, res, next) => {
   next(new Error('Endpoint Not Found'));
