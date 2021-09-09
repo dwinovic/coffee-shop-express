@@ -90,6 +90,7 @@ const login = async (req, res, next) => {
           {
             httpOnly: true,
             secure: true,
+            sameSite: 'none',
           },
         );
       } else {
@@ -231,6 +232,7 @@ const refreshToken = async (req, res, next) => {
             {
               httpOnly: true,
               secure: true,
+              sameSite: 'none',
             },
           );
         } else {
