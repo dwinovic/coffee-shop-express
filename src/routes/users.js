@@ -1,7 +1,7 @@
-import express from 'express';
-import usersController from '../controllers/usersController.js';
-import usersValidation from '../validations/usersValidation.js';
-import { Auth, Role } from '../middlewares/Auth.js';
+const express = require('express');
+const usersController = require('../controllers/usersController');
+const usersValidation = require('../validations/usersValidation');
+const { Auth, Role } = require('../middlewares/Auth');
 
 const router = express.Router();
 
@@ -26,4 +26,4 @@ router
   .get('/:id', Auth, Role('member', 'admin'), usersValidation('profile-id'), usersController.getStatus)
   .post('/:id', Auth, Role('member', 'admin'), usersValidation('update'), usersController.updateUser);
 
-export default router;
+module.exports = router;

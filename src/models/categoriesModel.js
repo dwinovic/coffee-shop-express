@@ -1,5 +1,5 @@
-import connection from '../configs/db.js';
-import { promiseResolveReject } from '../helpers/helpers.js';
+const connection = require('../configs/db');
+const { promiseResolveReject } = require('../helpers/helpers');
 
 const addcategory = (data) => new Promise((resolve, reject) => {
   connection.query('INSERT INTO categories SET ?', data, (err, result) => {
@@ -49,7 +49,7 @@ const deleteCategory = (categoryId) => new Promise((resolve, reject) => {
   });
 });
 
-export default {
+module.exports = {
   addcategory,
   showCategory,
   getCategories,

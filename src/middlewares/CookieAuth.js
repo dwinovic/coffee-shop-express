@@ -1,4 +1,4 @@
-import Jwt from 'jsonwebtoken';
+const Jwt = require('jsonwebtoken');
 
 const CookieAuth = (socket, next) => {
   const token = socket.request.cookies.authCoffeeShop;
@@ -29,4 +29,4 @@ const CookieAuth = (socket, next) => {
   });
 };
 
-export default CookieAuth;
+module.exports = CookieAuth;
