@@ -1,5 +1,5 @@
-import { body, query, param } from 'express-validator';
-import sizezModel from '../models/sizezModel.js';
+const { body, query, param } = require('express-validator');
+const sizezModel = require('../models/sizezModel');
 
 const addSizeFiedlRules = () => [
   body('size_name')
@@ -56,7 +56,7 @@ const rulesUpdateAndDelete = () => [
     .withMessage('id must be more than 0'),
 ];
 
-export default {
+module.exports = {
   addSizeFiedlRules,
   updateSizeFieldRules,
   rulesUpdateAndDelete,

@@ -1,5 +1,5 @@
-import { response, responsePagination, responseError } from '../helpers/helpers.js';
-import historyModel from '../models/historyModel.js';
+const { response, responsePagination, responseError } = require('../helpers/helpers');
+const historyModel = require('../models/historyModel');
 
 const getHistory = async (req, res, next) => {
 //   let userId = 8;
@@ -78,7 +78,7 @@ const deleteHistory = async (req, res, next) => {
   }
 };
 
-export default {
+module.exports = {
   getHistory,
   deleteHistory,
 };

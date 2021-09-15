@@ -1,7 +1,7 @@
-import Express from 'express';
-import deliveriesController from '../controllers/deliveriesController.js';
-import deliveriesValidation from '../validations/deliveriesValidation.js';
-import resultOfValidation from '../validations/ResultOfValidation.js';
+const Express = require('express');
+const deliveriesController = require('../controllers/deliveriesController');
+const deliveriesValidation = require('../validations/deliveriesValidation');
+const resultOfValidation = require('../validations/ResultOfValidation');
 
 const router = Express.Router();
 
@@ -22,4 +22,5 @@ router
     deliveriesController.updateDelivery,
   )
   .delete('/deletedelivery/:id', deliveriesValidation.rulesUpdateAndDelete(), resultOfValidation, deliveriesController.deleteSize);
-export default router;
+
+module.exports = router;

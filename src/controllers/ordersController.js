@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
-import { v4 as uuidv4 } from 'uuid';
-import ordersModel from '../models/ordersModel.js';
-import { response } from '../helpers/helpers.js';
+const { v4: uuidv4 } = require('uuid');
+const ordersModel = require('../models/ordersModel');
+const { response } = require('../helpers/helpers');
 
 const createOrder = async (req, res, next) => {
   try {
@@ -83,6 +83,6 @@ const createOrder = async (req, res, next) => {
   }
 };
 
-export default {
+module.exports = {
   createOrder,
 };
