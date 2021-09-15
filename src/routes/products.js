@@ -1,7 +1,7 @@
-import express from 'express';
-import productsController from '../controllers/productsController.js';
-import productsValidation from '../validations/productsValidation.js';
-import { Auth, Role } from '../middlewares/Auth.js';
+const express = require('express');
+const productsController = require('../controllers/productsController');
+const productsValidation = require('../validations/productsValidation');
+const { Auth, Role } = require('../middlewares/Auth');
 
 const router = express.Router();
 router
@@ -12,4 +12,4 @@ router
   .delete('/:id', Auth, Role('admin'), productsValidation('delete'), productsController.deleteProduct)
   .get('/category/:id', productsValidation('readProductCategory'), productsController.readProductByCategory);
 
-export default router;
+module.exports = router;

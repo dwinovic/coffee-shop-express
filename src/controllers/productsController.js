@@ -1,10 +1,10 @@
-import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs/promises';
-import productsModel from '../models/productsModel.js';
-import {
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
+const fs = require('fs/promises');
+const productsModel = require('../models/productsModel');
+const {
   responseError, response, createFolderImg, responsePagination,
-} from '../helpers/helpers.js';
+} = require('../helpers/helpers');
 
 const createProduct = async (req, res, next) => {
   try {
@@ -264,7 +264,9 @@ const readProductByCategory = async (req, res, next) => {
       }
       let dataProducts;
       let pagination;
-      const lengthRecord = Object.keys(await productsModel.readProductByCategory(req.params.id, search, order, fieldOrder)).length;
+      const lengthRecord = Object.keys(
+        await productsModel.readProductByCategory(req.params.id, search, order, fieldOrder),
+      ).length;
       if (lengthRecord > 0) {
         const limit = req.query.limit || 5;
         const pages = Math.ceil(lengthRecord / limit);
@@ -291,7 +293,14 @@ const readProductByCategory = async (req, res, next) => {
           nextPage,
           prevPage,
         };
-        dataProducts = await productsModel.readProductByCategory(req.params.id, search, order, fieldOrder, start, limit);
+        dataProducts = await productsModel.readProductByCategory(
+          req.params.id,
+          search,
+          order,
+          fieldOrder,
+          start,
+          limit,
+        );
         responsePagination(res, 'success', 200, 'data products by category', dataProducts, pagination);
       } else {
         dataProducts = await productsModel.readProductByCategory(req.params.id, search, order, fieldOrder);
@@ -305,7 +314,7 @@ const readProductByCategory = async (req, res, next) => {
   }
 };
 
-export default {
+module.exports = {
   createProduct,
   updateProduct,
   deleteProduct,

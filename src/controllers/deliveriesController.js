@@ -1,5 +1,5 @@
-import deliveriesModel from '../models/deliveriesModel.js';
-import { response, responseError, responsePagination } from '../helpers/helpers.js';
+const deliveriesModel = require('../models/deliveriesModel');
+const { response, responseError, responsePagination } = require('../helpers/helpers');
 
 const addDeliveries = async (req, res, next) => {
   try {
@@ -149,7 +149,7 @@ const deleteSize = async (req, res, next) => {
   }
 };
 
-export default {
+module.exports = {
   addDeliveries,
   getDeliveries,
   showDeliveries,

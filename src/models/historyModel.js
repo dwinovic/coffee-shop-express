@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
-import connection from '../configs/db.js';
-import { promiseResolveReject } from '../helpers/helpers.js';
+const connection = require('../configs/db');
+const { promiseResolveReject } = require('../helpers/helpers');
 
 const getHistory = (search, userId, order, start = '', limit = '') => new Promise((resolve, reject) => {
   if (userId === 0) {
@@ -48,7 +48,7 @@ const updateOrder = (data, id) => new Promise((resolve, reject) => {
   });
 });
 
-export default {
+module.exports = {
   getHistory,
   checkExistOrder,
   updateOrder,
