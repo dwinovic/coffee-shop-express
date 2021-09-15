@@ -1,6 +1,6 @@
-import mysql from 'mysql2';
-import connection from '../configs/db.js';
-import { promiseResolveReject } from '../helpers/helpers.js';
+const mysql = require('mysql2');
+const connection = require('../configs/db');
+const { promiseResolveReject } = require('../helpers/helpers');
 
 const checkProducts = (id) => new Promise((resolve, reject) => {
   connection.query('SELECT * FROM products where product_id IN (?)', [id], (error, result) => {
@@ -44,7 +44,7 @@ const updateProducts = (data, id) => new Promise((resolve, reject) => {
   });
 });
 
-export default {
+module.exports = {
   checkProducts,
   insertOrder,
   insertOrderDetails,

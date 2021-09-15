@@ -1,7 +1,7 @@
-import Express from 'express';
-import historyController from '../controllers/historyController.js';
-import ordersValidation from '../validations/ordersValidation.js';
-import { Auth, Role } from '../middlewares/Auth.js';
+const Express = require('express');
+const historyController = require('../controllers/historyController');
+const ordersValidation = require('../validations/ordersValidation');
+const { Auth, Role } = require('../middlewares/Auth');
 
 const router = Express.Router();
 
@@ -10,4 +10,4 @@ router
   .delete('/:id', Auth, Role('admin', 'member'), ordersValidation('delete'), historyController.deleteHistory);
 //   .get('/', historyController.getHistory);
 
-export default router;
+module.exports = router;

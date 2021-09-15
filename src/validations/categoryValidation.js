@@ -1,5 +1,5 @@
-import { body, query, param } from 'express-validator';
-import categoriesModel from '../models/categoriesModel.js';
+const { body, query, param } = require('express-validator');
+const categoriesModel = require('../models/categoriesModel');
 
 const addCategoryFieldRules = () => [
   body('category_name')
@@ -55,7 +55,7 @@ const rulesUpdateAndDelete = () => [
     .withMessage('id must be more than 0'),
 ];
 
-export default {
+module.exports = {
   addCategoryFieldRules,
   updateCategoryFieldRules,
   rulesRead,

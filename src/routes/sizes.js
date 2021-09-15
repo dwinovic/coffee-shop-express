@@ -1,7 +1,7 @@
-import Express from 'express';
-import sizesController from '../controllers/sizesController.js';
-import sizeValidation from '../validations/sizeValidation.js';
-import resultOfValidation from '../validations/ResultOfValidation.js';
+const Express = require('express');
+const sizesController = require('../controllers/sizesController');
+const sizeValidation = require('../validations/sizeValidation');
+const resultOfValidation = require('../validations/ResultOfValidation');
 
 const router = Express.Router();
 
@@ -17,4 +17,5 @@ router
     sizesController.updateSize,
   )
   .delete('/deletesize/:id', sizeValidation.rulesUpdateAndDelete(), resultOfValidation, sizesController.deleteSize);
-export default router;
+
+module.exports = router;

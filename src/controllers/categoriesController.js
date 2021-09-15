@@ -1,5 +1,5 @@
-import categoriesModel from '../models/categoriesModel.js';
-import { response, responseError, responsePagination } from '../helpers/helpers.js';
+const categoriesModel = require('../models/categoriesModel');
+const { response, responseError, responsePagination } = require('../helpers/helpers');
 
 const addcategory = async (req, res, next) => {
   try {
@@ -149,7 +149,7 @@ const deleteCategory = async (req, res, next) => {
   }
 };
 
-export default {
+module.exports = {
   addcategory,
   getCategories,
   showCategory,
