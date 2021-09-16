@@ -1,3 +1,4 @@
+/* eslint-disable object-curly-newline */
 const { body, param, query, validationResult } = require('express-validator');
 const { responseError } = require('../helpers/helpers');
 const usersModel = require('../models/usersModel');

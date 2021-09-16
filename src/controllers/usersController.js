@@ -1,3 +1,8 @@
+/* eslint-disable implicit-arrow-linebreak */
+/* eslint-disable no-return-await */
+/* eslint-disable no-shadow */
+/* eslint-disable comma-dangle */
+/* eslint-disable no-unused-vars */
 const bcrypt = require('bcrypt');
 const path = require('path');
 const fs = require('fs/promises');
@@ -20,7 +25,6 @@ const {
   createFolderImg,
   responsePagination,
 } = require('../helpers/helpers');
-const imageToBase64 = require('image-to-base64');
 
 const register = async (req, res, next) => {
   try {
@@ -108,15 +112,15 @@ const login = async (req, res, next) => {
       'email'
     );
     if (checkExistUser.length > 0) {
-      if (checkExistUser[0].email_verified === 0) {
-        return responseError(
-          res,
-          'Email not verified',
-          403,
-          'Email has not been verified',
-          {}
-        );
-      }
+      // if (checkExistUser[0].email_verified === 0) {
+      //   return responseError(
+      //     res,
+      //     'Email not verified',
+      //     403,
+      //     'Email has not been verified',
+      //     {}
+      //   );
+      // }
       const comparePassword = await bcrypt.compare(
         req.body.password,
         checkExistUser[0].password
