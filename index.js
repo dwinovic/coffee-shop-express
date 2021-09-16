@@ -25,7 +25,10 @@ const io = new Server(httpServer, {
   cors: {
     credentials: JSON.parse(process.env.CREDENTIALS),
     origin(origin, callback) {
-      if (process.env.CORS_ORIGIN.indexOf(origin) !== -1 || origin === undefined) {
+      if (
+        process.env.CORS_ORIGIN.indexOf(origin) !== -1 ||
+        origin === undefined
+      ) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
@@ -34,18 +37,26 @@ const io = new Server(httpServer, {
   },
 });
 app.use('/public', express.static(path.resolve('./public')));
-app.use(fileUpload());
+app.use(
+  fileUpload({
+    useTempFiles: true,
+    tempFileDir: '/tmp/',
+  })
+);
 app.use(
   cors({
     credentials: JSON.parse(process.env.CREDENTIALS),
     origin(origin, callback) {
-      if (process.env.CORS_ORIGIN.indexOf(origin) !== -1 || origin === undefined) {
+      if (
+        process.env.CORS_ORIGIN.indexOf(origin) !== -1 ||
+        origin === undefined
+      ) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
       }
     },
-  }),
+  })
 );
 app.use((req, res, next) => {
   req.io = io;

@@ -1,6 +1,4 @@
-const {
-  body, param, query, validationResult,
-} = require('express-validator');
+const { body, param, query, validationResult } = require('express-validator');
 const { responseError } = require('../helpers/helpers');
 const usersModel = require('../models/usersModel');
 
@@ -38,7 +36,9 @@ const rulesLogin = () => [
     .withMessage('password length between 8 to 255'),
 ];
 
-const refreshToken = () => [body('refreshToken').notEmpty().withMessage('refreshToken is required')];
+const refreshToken = () => [
+  body('refreshToken').notEmpty().withMessage('refreshToken is required'),
+];
 
 const rulesUpdateUser = () => [
   body('firstname')
@@ -203,7 +203,12 @@ const changePassword = () => [
 
 const validate = (method) => {
   if (method === 'register') {
-    return [rulesRegister(), rulesCreatePassword(), rulesCreateEmail(), validateResult];
+    return [
+      rulesRegister(),
+      rulesCreatePassword(),
+      rulesCreateEmail(),
+      validateResult,
+    ];
   }
   if (method === 'login') {
     return [rulesLogin(), validateResult];
