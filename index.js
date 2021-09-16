@@ -1,25 +1,25 @@
 /* eslint-disable no-unused-vars */
-import express from 'express';
-import path from 'path';
-import 'dotenv/config';
-import cors from 'cors';
-import fileUpload from 'express-fileupload';
-import cookieParser from 'cookie-parser';
-import { Server, Socket } from 'socket.io';
-import { createServer } from 'http';
-import ioCookieParser from 'socket.io-cookie-parser';
-import { responseError } from './src/helpers/helpers.js';
-import CookieAuth from './src/middlewares/CookieAuth.js';
-import categoriesRoute from './src/routes/categories.js';
-import sizesRoute from './src/routes/sizes.js';
-import deliveriesRoute from './src/routes/deliveries.js';
-import usersRoute from './src/routes/users.js';
-import productsRoute from './src/routes/products.js';
-import ordersRoute from './src/routes/orders.js';
-import historyRoute from './src/routes/history.js';
+const express = require('express');
+const path = require('path');
+require('dotenv').config();
+const cors = require('cors');
+const fileUpload = require('express-fileupload');
+const cookieParser = require('cookie-parser');
+const { Server, Socket } = require('socket.io');
+const { createServer } = require('http');
+const ioCookieParser = require('socket.io-cookie-parser');
+const { responseError } = require('./src/helpers/helpers');
+const CookieAuth = require('./src/middlewares/CookieAuth');
+const categoriesRoute = require('./src/routes/categories');
+const sizesRoute = require('./src/routes/sizes');
+const deliveriesRoute = require('./src/routes/deliveries');
+const usersRoute = require('./src/routes/users');
+const productsRoute = require('./src/routes/products');
+const ordersRoute = require('./src/routes/orders');
+const historyRoute = require('./src/routes/history');
 
 const app = express();
-const port = process.env.PORT_APPLICATION;
+const port = process.env.PORT;
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {

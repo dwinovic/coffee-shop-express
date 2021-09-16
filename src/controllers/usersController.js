@@ -1,12 +1,12 @@
-import bcrypt from 'bcrypt';
-import path from 'path';
-import fs from 'fs/promises';
-import Jwt from 'jsonwebtoken';
-import { v4 as uuidv4 } from 'uuid';
-import usersModel from '../models/usersModel.js';
-import { redis } from '../configs/redis.js';
-import { genAccessToken, genRefreshToken, genVerifEmailToken } from '../helpers/jwt.js';
-import {
+const bcrypt = require('bcrypt');
+const path = require('path');
+const fs = require('fs/promises');
+const Jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
+const usersModel = require('../models/usersModel');
+const { redis } = require('../configs/redis');
+const { genAccessToken, genRefreshToken, genVerifEmailToken } = require('../helpers/jwt');
+const {
   response,
   responseError,
   responseCookie,
@@ -14,7 +14,7 @@ import {
   sendResetPassword,
   createFolderImg,
   responsePagination,
-} from '../helpers/helpers.js';
+} = require('../helpers/helpers');
 
 const register = async (req, res, next) => {
   try {
@@ -111,7 +111,7 @@ const login = async (req, res, next) => {
 const logout = (req, res, next) => {
   try {
     // eslint-disable-next-line no-unused-vars
-    redis.del(`jwtRefToken-${req.userLogin.user_id}`, async (error, result) => {
+    redis.del(`${process.env.PREFIX_REDIS}jwtRefToken-${req.userLogin.user_id}`, async (error, result) => {
       if (error) {
         next(error);
       } else {
@@ -134,11 +134,11 @@ const verifEmail = async (req, res, next) => {
       if (err) {
         return responseError(res, 'Verif failed', 403, 'Verif Register Email failed', []);
       }
-      redis.get(`jwtEmailVerToken-${decode.user_id}`, async (error, result) => {
+      redis.get(`${process.env.PREFIX_REDIS}jwtEmailVerToken-${decode.user_id}`, async (error, result) => {
         if (result !== null) {
           const updateVerifEmail = await usersModel.updateUser({ email_verified: 1 }, decode.user_id);
           if (updateVerifEmail.affectedRows) {
-            redis.del(`jwtEmailVerToken-${decode.user_id}`);
+            redis.del(`${process.env.PREFIX_REDIS}jwtEmailVerToken-${decode.user_id}`);
             return response(res, 'success', 200, 'successfully verified email', []);
           }
         } else {
@@ -163,7 +163,7 @@ const forgotPassword = async (req, res, next) => {
     if (user.length > 0) {
       const id = user[0].user_id;
       const token = Jwt.sign({ id, email }, process.env.FORGOT_PASSWORD_TOKEN_SECRET, { expiresIn: '24h' });
-      redis.set(`JWTFORGOT-${id}`, token);
+      redis.set(`${process.env.PREFIX_REDIS}JWTFORGOT-${id}`, token);
       response(res, 'Success', 200, 'Successfully create token, check email for reset password');
       await sendResetPassword(token, email, user[0].email);
     } else {
@@ -180,7 +180,7 @@ const resetPassword = async (req, res, next) => {
       if (err) {
         return responseError(res, 'Reset password failed', 403, 'Reset password failed', {});
       }
-      redis.get(`JWTFORGOT-${decode.id}`, async (error, result) => {
+      redis.get(`${process.env.PREFIX_REDIS}JWTFORGOT-${decode.id}`, async (error, result) => {
         if (result !== null) {
           const salt = await bcrypt.genSalt(10);
           const data = {
@@ -188,7 +188,7 @@ const resetPassword = async (req, res, next) => {
           };
           const updatePassword = await usersModel.updateUser(data, decode.id);
           if (updatePassword.affectedRows) {
-            redis.del(`JWTFORGOT-${decode.id}`);
+            redis.del(`${process.env.PREFIX_REDIS}JWTFORGOT-${decode.id}`);
             return response(res, 'success', 200, 'Successfully reset password', []);
           }
         } else {
@@ -219,30 +219,33 @@ const refreshToken = async (req, res, next) => {
         return responseError(res, 'Authorized failed', 401, 'token not active', []);
       }
       // eslint-disable-next-line no-unused-vars
-      const cacheRefToken = redis.get(`jwtRefToken-${decode.user_id}`, async (error, cacheToken) => {
-        if (cacheToken === token.refreshToken) {
-          delete decode.iat;
-          delete decode.exp;
-          redis.del(`jwtRefToken-${decode.user_id}`);
-          const accessToken = await genAccessToken(decode, { expiresIn: 60 * 60 * 2 });
-          const newRefToken = await genRefreshToken(decode, { expiresIn: 60 * 60 * 4 });
-          responseCookie(
-            res,
-            'Success',
-            200,
-            'AccessToken',
-            {},
-            { accessToken, refreshToken: newRefToken },
-            {
-              httpOnly: true,
-              secure: true,
-              sameSite: 'none',
-            },
-          );
-        } else {
-          responseError(res, 'Authorized failed', 403, 'Wrong refreshToken', []);
-        }
-      });
+      const cacheRefToken = redis.get(
+        `${process.env.PREFIX_REDIS}jwtRefToken-${decode.user_id}`,
+        async (error, cacheToken) => {
+          if (cacheToken === token.refreshToken) {
+            delete decode.iat;
+            delete decode.exp;
+            redis.del(`${process.env.PREFIX_REDIS}jwtRefToken-${decode.user_id}`);
+            const accessToken = await genAccessToken(decode, { expiresIn: 60 * 60 * 2 });
+            const newRefToken = await genRefreshToken(decode, { expiresIn: 60 * 60 * 4 });
+            responseCookie(
+              res,
+              'Success',
+              200,
+              'AccessToken',
+              {},
+              { accessToken, refreshToken: newRefToken },
+              {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'none',
+              },
+            );
+          } else {
+            responseError(res, 'Authorized failed', 403, 'Wrong refreshToken', []);
+          }
+        },
+      );
     });
   } catch (error) {
     next(error);
@@ -405,7 +408,7 @@ const readUser = async (req, res, next) => {
   }
 };
 
-export default {
+module.exports = {
   register,
   verifEmail,
   checkToken,

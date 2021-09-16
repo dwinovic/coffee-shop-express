@@ -1,5 +1,5 @@
-import sizezModel from '../models/sizezModel.js';
-import { response, responseError, responsePagination } from '../helpers/helpers.js';
+const sizezModel = require('../models/sizezModel');
+const { response, responseError, responsePagination } = require('../helpers/helpers');
 
 const addSize = async (req, res, next) => {
   try {
@@ -149,7 +149,7 @@ const deleteSize = async (req, res, next) => {
   }
 };
 
-export default {
+module.exports = {
   addSize,
   getSize,
   showSize,

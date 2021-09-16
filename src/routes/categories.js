@@ -1,7 +1,7 @@
-import Express from 'express';
-import categoriesController from '../controllers/categoriesController.js';
-import resultOfValidation from '../validations/ResultOfValidation.js';
-import categoryValidation from '../validations/categoryValidation.js';
+const Express = require('express');
+const categoriesController = require('../controllers/categoriesController');
+const resultOfValidation = require('../validations/ResultOfValidation');
+const categoryValidation = require('../validations/categoryValidation');
 
 const router = Express.Router();
 
@@ -22,4 +22,5 @@ router
     categoriesController.updatecategory,
   )
   .delete('/deletecategory/:id', categoryValidation.rulesUpdateAndDelete(), resultOfValidation, categoriesController.deleteCategory);
-export default router;
+
+module.exports = router;

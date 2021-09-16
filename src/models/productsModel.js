@@ -1,5 +1,5 @@
-import connection from '../configs/db.js';
-import { promiseResolveReject } from '../helpers/helpers.js';
+const connection = require('../configs/db');
+const { promiseResolveReject } = require('../helpers/helpers');
 
 const checkDeliveries = (id) => new Promise((resolve, reject) => {
   connection.query('SELECT * FROM deliveries WHERE delivery_id IN (?)', [id], (error, result) => {
@@ -146,10 +146,14 @@ const readProductByCategory = (categoryId, search, order, fieldOrder, start = ''
 });
 
 const getAllProductSize = (id) => new Promise((resolve, reject) => {
-  connection.query(`SELECT sizes.* FROM product_size INNER JOIN sizes ON sizes.size_id = product_size.size_id
-  WHERE product_size.product_id = ?`, id, (error, result) => {
-    promiseResolveReject(resolve, reject, error, result);
-  });
+  connection.query(
+    `SELECT sizes.* FROM product_size INNER JOIN sizes ON sizes.size_id = product_size.size_id
+  WHERE product_size.product_id = ?`,
+    id,
+    (error, result) => {
+      promiseResolveReject(resolve, reject, error, result);
+    },
+  );
 });
 
 const getAllProductDelivery = (id) => new Promise((resolve, reject) => {
@@ -163,7 +167,7 @@ const getAllProductDelivery = (id) => new Promise((resolve, reject) => {
   );
 });
 
-export default {
+module.exports = {
   checkDeliveries,
   checkSizes,
   checkCategory,

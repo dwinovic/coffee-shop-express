@@ -1,5 +1,5 @@
-import { body, query, param } from 'express-validator';
-import deliveriesModel from '../models/deliveriesModel.js';
+const { body, query, param } = require('express-validator');
+const deliveriesModel = require('../models/deliveriesModel');
 
 const addDeliveriesFiedlRules = () => [
   body('delivery_name')
@@ -55,7 +55,7 @@ const rulesUpdateAndDelete = () => [
     .withMessage('id must be more than 0'),
 ];
 
-export default {
+module.exports = {
   addDeliveriesFiedlRules,
   updateDeliveriesFieldRules,
   rulesRead,
