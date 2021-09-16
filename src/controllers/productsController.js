@@ -124,6 +124,9 @@ const updateProduct = async (req, res, next) => {
         dataDeliveryProduct.forEach((delivery) =>
           recentDeliveryProduct.push(delivery.delivery_id)
         );
+        // Upload to cloudinary
+        const uploaderCloudinary = async (path) =>
+          await cloudinary.uploads(path, 'Coffe Shop');
         if (Array.isArray(req.body.size_id)) {
           deleteSizeProduct = recentSizeProduct.filter(
             (x) => !req.body.size_id.includes(x)
@@ -166,30 +169,36 @@ const updateProduct = async (req, res, next) => {
         }
         if (req.files) {
           if (req.files.img_product) {
-            createFolderImg('/public/img/img_product');
-            if (
-              checkExistProduct[0].img_product &&
-              checkExistProduct[0].img_product.length > 10
-            ) {
-              fs.unlink(
-                path.join(
-                  path.dirname(''),
-                  `/${checkExistProduct[0].img_product}`
-                )
-              );
-            }
-            const fileName =
-              uuidv4() + path.extname(req.files.img_product.name);
-            const savePath = path.join(
-              path.dirname(''),
-              '/public/img/img_product',
-              fileName
+            const uploadImage = await uploaderCloudinary(
+              req.files.img_product.tempFilePath
             );
+            // START = Save to public directory
+            // createFolderImg('/public/img/img_product');
+            // if (
+            //   checkExistProduct[0].img_product &&
+            //   checkExistProduct[0].img_product.length > 10
+            // ) {
+            //   fs.unlink(
+            //     path.join(
+            //       path.dirname(''),
+            //       `/${checkExistProduct[0].img_product}`
+            //     )
+            //   );
+            // }
+            // const fileName =
+            //   uuidv4() + path.extname(req.files.img_product.name);
+            // const savePath = path.join(
+            //   path.dirname(''),
+            //   '/public/img/img_product',
+            //   fileName
+            // );
+            // END = Save to public directory
+
             data = {
               ...data,
-              img_product: `public/img/img_product/${fileName}`,
+              img_product: uploadImage.url,
             };
-            await req.files.img_product.mv(savePath);
+            // await req.files.img_product.mv(savePath);
           }
         }
         const changeDataProduct = await productsModel.updateProduct(
