@@ -5,7 +5,12 @@ const Jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const usersModel = require('../models/usersModel');
 const { redis } = require('../configs/redis');
-const { genAccessToken, genRefreshToken, genVerifEmailToken } = require('../helpers/jwt');
+const cloudinary = require('../configs/cloudinary');
+const {
+  genAccessToken,
+  genRefreshToken,
+  genVerifEmailToken,
+} = require('../helpers/jwt');
 const {
   response,
   responseError,
@@ -15,6 +20,7 @@ const {
   createFolderImg,
   responsePagination,
 } = require('../helpers/helpers');
+const imageToBase64 = require('image-to-base64');
 
 const register = async (req, res, next) => {
   try {
@@ -28,7 +34,10 @@ const register = async (req, res, next) => {
     if (addDataUser.affectedRows) {
       delete data.password;
       response(res, 'success', 200, 'successfully added user data', data);
-      const token = await genVerifEmailToken({ ...data, user_id: addDataUser.insertId }, { expiresIn: 60 * 60 * 24 });
+      const token = await genVerifEmailToken(
+        { ...data, user_id: addDataUser.insertId },
+        { expiresIn: 60 * 60 * 24 }
+      );
       await sendVerifEmailRegister(token, data.email, data.email);
     }
   } catch (error) {
@@ -48,17 +57,41 @@ const checkToken = (req, res, next) => {
       secretKey = process.env.FORGOT_PASSWORD_TOKEN_SECRET;
     }
     if (!tokenVerif) {
-      return responseError(res, 'Check Token failed', 403, 'Server need tokenverifemail', []);
+      return responseError(
+        res,
+        'Check Token failed',
+        403,
+        'Server need tokenverifemail',
+        []
+      );
     }
     Jwt.verify(tokenVerif, secretKey, (error, decode) => {
       if (error) {
         if (error.name === 'TokenExpiredError') {
-          return responseError(res, 'Authorized failed', 401, 'token expired', []);
+          return responseError(
+            res,
+            'Authorized failed',
+            401,
+            'token expired',
+            []
+          );
           // eslint-disable-next-line no-else-return
         } else if (error.name === 'JsonWebTokenError') {
-          return responseError(res, 'Authorized failed', 401, 'token invalid', []);
+          return responseError(
+            res,
+            'Authorized failed',
+            401,
+            'token invalid',
+            []
+          );
         } else {
-          return responseError(res, 'Authorized failed', 401, 'token not active', []);
+          return responseError(
+            res,
+            'Authorized failed',
+            401,
+            'token not active',
+            []
+          );
         }
       }
       response(res, 'Token Valid', 200, 'Token verif email valid', decode);
@@ -70,16 +103,34 @@ const checkToken = (req, res, next) => {
 
 const login = async (req, res, next) => {
   try {
-    const checkExistUser = await usersModel.checkExistUser(req.body.email, 'email');
+    const checkExistUser = await usersModel.checkExistUser(
+      req.body.email,
+      'email'
+    );
     if (checkExistUser.length > 0) {
       if (checkExistUser[0].email_verified === 0) {
-        return responseError(res, 'Email not verified', 403, 'Email has not been verified', {});
+        return responseError(
+          res,
+          'Email not verified',
+          403,
+          'Email has not been verified',
+          {}
+        );
       }
-      const comparePassword = await bcrypt.compare(req.body.password, checkExistUser[0].password);
+      const comparePassword = await bcrypt.compare(
+        req.body.password,
+        checkExistUser[0].password
+      );
       if (comparePassword) {
         delete checkExistUser[0].password;
-        const accessToken = await genAccessToken({ ...checkExistUser[0] }, { expiresIn: 60 * 60 * 2 });
-        const refreshToken = await genRefreshToken({ ...checkExistUser[0] }, { expiresIn: 60 * 60 * 4 });
+        const accessToken = await genAccessToken(
+          { ...checkExistUser[0] },
+          { expiresIn: 60 * 60 * 2 }
+        );
+        const refreshToken = await genRefreshToken(
+          { ...checkExistUser[0] },
+          { expiresIn: 60 * 60 * 4 }
+        );
         responseCookie(
           res,
           'Success',
@@ -91,7 +142,7 @@ const login = async (req, res, next) => {
             httpOnly: true,
             secure: true,
             sameSite: 'none',
-          },
+          }
         );
       } else {
         responseError(res, 'Authorized failed', 401, 'Wrong password', {
@@ -111,18 +162,21 @@ const login = async (req, res, next) => {
 const logout = (req, res, next) => {
   try {
     // eslint-disable-next-line no-unused-vars
-    redis.del(`${process.env.PREFIX_REDIS}jwtRefToken-${req.userLogin.user_id}`, async (error, result) => {
-      if (error) {
-        next(error);
-      } else {
-        res.clearCookie('authCoffeeShop', {
-          httpOnly: true,
-          secure: true,
-          sameSite: 'none',
-        });
-        response(res, 'Logout', 200, 'Logout success', []);
+    redis.del(
+      `${process.env.PREFIX_REDIS}jwtRefToken-${req.userLogin.user_id}`,
+      async (error, result) => {
+        if (error) {
+          next(error);
+        } else {
+          res.clearCookie('authCoffeeShop', {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'none',
+          });
+          response(res, 'Logout', 200, 'Logout success', []);
+        }
       }
-    });
+    );
   } catch (error) {
     next(error);
   }
@@ -130,27 +184,60 @@ const logout = (req, res, next) => {
 
 const verifEmail = async (req, res, next) => {
   try {
-    Jwt.verify(req.cookies.tokenEmail, process.env.VERIF_EMAIL_TOKEN_SECRET, (err, decode) => {
-      if (err) {
-        return responseError(res, 'Verif failed', 403, 'Verif Register Email failed', []);
-      }
-      redis.get(`${process.env.PREFIX_REDIS}jwtEmailVerToken-${decode.user_id}`, async (error, result) => {
-        if (result !== null) {
-          const updateVerifEmail = await usersModel.updateUser({ email_verified: 1 }, decode.user_id);
-          if (updateVerifEmail.affectedRows) {
-            redis.del(`${process.env.PREFIX_REDIS}jwtEmailVerToken-${decode.user_id}`);
-            return response(res, 'success', 200, 'successfully verified email', []);
-          }
-        } else {
-          const checkVerifEmail = await usersModel.checkExistUser(decode.user_id, 'user_id');
-          if (checkVerifEmail[0].email_verified === 1) {
-            response(res, 'success', 201, 'Email is verified', []);
-          } else if (checkVerifEmail[0].email_verified === 0) {
-            responseError(res, 'Verif failed', 403, 'Verif Register Email failed', []);
-          }
+    Jwt.verify(
+      req.cookies.tokenEmail,
+      process.env.VERIF_EMAIL_TOKEN_SECRET,
+      (err, decode) => {
+        if (err) {
+          return responseError(
+            res,
+            'Verif failed',
+            403,
+            'Verif Register Email failed',
+            []
+          );
         }
-      });
-    });
+        redis.get(
+          `${process.env.PREFIX_REDIS}jwtEmailVerToken-${decode.user_id}`,
+          async (error, result) => {
+            if (result !== null) {
+              const updateVerifEmail = await usersModel.updateUser(
+                { email_verified: 1 },
+                decode.user_id
+              );
+              if (updateVerifEmail.affectedRows) {
+                redis.del(
+                  `${process.env.PREFIX_REDIS}jwtEmailVerToken-${decode.user_id}`
+                );
+                return response(
+                  res,
+                  'success',
+                  200,
+                  'successfully verified email',
+                  []
+                );
+              }
+            } else {
+              const checkVerifEmail = await usersModel.checkExistUser(
+                decode.user_id,
+                'user_id'
+              );
+              if (checkVerifEmail[0].email_verified === 1) {
+                response(res, 'success', 201, 'Email is verified', []);
+              } else if (checkVerifEmail[0].email_verified === 0) {
+                responseError(
+                  res,
+                  'Verif failed',
+                  403,
+                  'Verif Register Email failed',
+                  []
+                );
+              }
+            }
+          }
+        );
+      }
+    );
   } catch (error) {
     next(error);
   }
@@ -162,9 +249,18 @@ const forgotPassword = async (req, res, next) => {
     const user = await usersModel.checkExistUser(email, 'email');
     if (user.length > 0) {
       const id = user[0].user_id;
-      const token = Jwt.sign({ id, email }, process.env.FORGOT_PASSWORD_TOKEN_SECRET, { expiresIn: '24h' });
+      const token = Jwt.sign(
+        { id, email },
+        process.env.FORGOT_PASSWORD_TOKEN_SECRET,
+        { expiresIn: '24h' }
+      );
       redis.set(`${process.env.PREFIX_REDIS}JWTFORGOT-${id}`, token);
-      response(res, 'Success', 200, 'Successfully create token, check email for reset password');
+      response(
+        res,
+        'Success',
+        200,
+        'Successfully create token, check email for reset password'
+      );
       await sendResetPassword(token, email, user[0].email);
     } else {
       response(res, 'Not found', 404, 'Email not found', {});
@@ -176,26 +272,54 @@ const forgotPassword = async (req, res, next) => {
 
 const resetPassword = async (req, res, next) => {
   try {
-    Jwt.verify(req.body.tokenPassword, process.env.FORGOT_PASSWORD_TOKEN_SECRET, (err, decode) => {
-      if (err) {
-        return responseError(res, 'Reset password failed', 403, 'Reset password failed', {});
-      }
-      redis.get(`${process.env.PREFIX_REDIS}JWTFORGOT-${decode.id}`, async (error, result) => {
-        if (result !== null) {
-          const salt = await bcrypt.genSalt(10);
-          const data = {
-            password: await bcrypt.hash(req.body.password, salt),
-          };
-          const updatePassword = await usersModel.updateUser(data, decode.id);
-          if (updatePassword.affectedRows) {
-            redis.del(`${process.env.PREFIX_REDIS}JWTFORGOT-${decode.id}`);
-            return response(res, 'success', 200, 'Successfully reset password', []);
-          }
-        } else {
-          responseError(res, 'Reset password failed', 403, 'Reset password failed', {});
+    Jwt.verify(
+      req.body.tokenPassword,
+      process.env.FORGOT_PASSWORD_TOKEN_SECRET,
+      (err, decode) => {
+        if (err) {
+          return responseError(
+            res,
+            'Reset password failed',
+            403,
+            'Reset password failed',
+            {}
+          );
         }
-      });
-    });
+        redis.get(
+          `${process.env.PREFIX_REDIS}JWTFORGOT-${decode.id}`,
+          async (error, result) => {
+            if (result !== null) {
+              const salt = await bcrypt.genSalt(10);
+              const data = {
+                password: await bcrypt.hash(req.body.password, salt),
+              };
+              const updatePassword = await usersModel.updateUser(
+                data,
+                decode.id
+              );
+              if (updatePassword.affectedRows) {
+                redis.del(`${process.env.PREFIX_REDIS}JWTFORGOT-${decode.id}`);
+                return response(
+                  res,
+                  'success',
+                  200,
+                  'Successfully reset password',
+                  []
+                );
+              }
+            } else {
+              responseError(
+                res,
+                'Reset password failed',
+                403,
+                'Reset password failed',
+                {}
+              );
+            }
+          }
+        );
+      }
+    );
   } catch (error) {
     next(error);
   }
@@ -205,48 +329,88 @@ const refreshToken = async (req, res, next) => {
   try {
     const token = req.cookies.authCoffeeShop;
     if (!token) {
-      return responseError(res, 'Authorized failed', 401, 'Server need refreshToken', []);
-    }
-    Jwt.verify(token.refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decode) => {
-      if (err) {
-        if (err.name === 'TokenExpiredError') {
-          res.clearCookie('authCoffeeShop');
-          return responseError(res, 'Authorized failed', 401, 'refreshToken expired', []);
-        }
-        if (err.name === 'JsonWebTokenError') {
-          return responseError(res, 'Authorized failed', 401, 'token invalid', []);
-        }
-        return responseError(res, 'Authorized failed', 401, 'token not active', []);
-      }
-      // eslint-disable-next-line no-unused-vars
-      const cacheRefToken = redis.get(
-        `${process.env.PREFIX_REDIS}jwtRefToken-${decode.user_id}`,
-        async (error, cacheToken) => {
-          if (cacheToken === token.refreshToken) {
-            delete decode.iat;
-            delete decode.exp;
-            redis.del(`${process.env.PREFIX_REDIS}jwtRefToken-${decode.user_id}`);
-            const accessToken = await genAccessToken(decode, { expiresIn: 60 * 60 * 2 });
-            const newRefToken = await genRefreshToken(decode, { expiresIn: 60 * 60 * 4 });
-            responseCookie(
-              res,
-              'Success',
-              200,
-              'AccessToken',
-              {},
-              { accessToken, refreshToken: newRefToken },
-              {
-                httpOnly: true,
-                secure: true,
-                sameSite: 'none',
-              },
-            );
-          } else {
-            responseError(res, 'Authorized failed', 403, 'Wrong refreshToken', []);
-          }
-        },
+      return responseError(
+        res,
+        'Authorized failed',
+        401,
+        'Server need refreshToken',
+        []
       );
-    });
+    }
+    Jwt.verify(
+      token.refreshToken,
+      process.env.REFRESH_TOKEN_SECRET,
+      (err, decode) => {
+        if (err) {
+          if (err.name === 'TokenExpiredError') {
+            res.clearCookie('authCoffeeShop');
+            return responseError(
+              res,
+              'Authorized failed',
+              401,
+              'refreshToken expired',
+              []
+            );
+          }
+          if (err.name === 'JsonWebTokenError') {
+            return responseError(
+              res,
+              'Authorized failed',
+              401,
+              'token invalid',
+              []
+            );
+          }
+          return responseError(
+            res,
+            'Authorized failed',
+            401,
+            'token not active',
+            []
+          );
+        }
+        // eslint-disable-next-line no-unused-vars
+        const cacheRefToken = redis.get(
+          `${process.env.PREFIX_REDIS}jwtRefToken-${decode.user_id}`,
+          async (error, cacheToken) => {
+            if (cacheToken === token.refreshToken) {
+              delete decode.iat;
+              delete decode.exp;
+              redis.del(
+                `${process.env.PREFIX_REDIS}jwtRefToken-${decode.user_id}`
+              );
+              const accessToken = await genAccessToken(decode, {
+                expiresIn: 60 * 60 * 2,
+              });
+              const newRefToken = await genRefreshToken(decode, {
+                expiresIn: 60 * 60 * 4,
+              });
+              responseCookie(
+                res,
+                'Success',
+                200,
+                'AccessToken',
+                {},
+                { accessToken, refreshToken: newRefToken },
+                {
+                  httpOnly: true,
+                  secure: true,
+                  sameSite: 'none',
+                }
+              );
+            } else {
+              responseError(
+                res,
+                'Authorized failed',
+                403,
+                'Wrong refreshToken',
+                []
+              );
+            }
+          }
+        );
+      }
+    );
   } catch (error) {
     next(error);
   }
@@ -254,7 +418,10 @@ const refreshToken = async (req, res, next) => {
 
 const profile = async (req, res, next) => {
   try {
-    const getProfile = await usersModel.checkExistUser(req.userLogin.user_id, 'user_id');
+    const getProfile = await usersModel.checkExistUser(
+      req.userLogin.user_id,
+      'user_id'
+    );
     if (getProfile.length > 0) {
       delete getProfile[0].password;
       response(res, 'Success', 200, 'User profile', getProfile[0]);
@@ -268,10 +435,19 @@ const profile = async (req, res, next) => {
 
 const getStatus = async (req, res, next) => {
   try {
-    const dataStatus = await usersModel.checkExistUser(req.params.id, 'user_id');
+    const dataStatus = await usersModel.checkExistUser(
+      req.params.id,
+      'user_id'
+    );
     if (dataStatus.length > 0) {
       delete dataStatus[0].password;
-      response(res, 'Data Status', 200, 'Data status Online/Offline', dataStatus[0]);
+      response(
+        res,
+        'Data Status',
+        200,
+        'Data status Online/Offline',
+        dataStatus[0]
+      );
     } else {
       response(res, 'failed', 404, 'user not found', {});
     }
@@ -291,27 +467,53 @@ const updateUser = async (req, res, next) => {
       address: req.body.address,
       roles: 'member',
     };
-    const checkExistUser = await usersModel.checkExistUser(req.params.id, 'user_id');
+    const checkExistUser = await usersModel.checkExistUser(
+      req.params.id,
+      'user_id'
+    );
+    const uploaderCloudinary = async (path) =>
+      await cloudinary.uploads(path, 'Coffe Shop');
+
     if (checkExistUser.length > 0) {
       if (req.body.email) {
         data = { ...data, email: req.body.email };
       }
       if (req.files) {
-        createFolderImg('/public/img/avatar');
-        if (checkExistUser[0].avatar && checkExistUser[0].avatar.length > 10) {
-          fs.unlink(path.join(path.dirname(''), `/${checkExistUser[0].avatar}`));
-        }
-        const fileName = uuidv4() + path.extname(req.files.avatar.name);
-        const savePath = path.join(path.dirname(''), '/public/img/avatar', fileName);
-        data = { ...data, avatar: `public/img/avatar/${fileName}` };
-        await req.files.avatar.mv(savePath);
+        // Upload to cloudinary
+        const uploadImage = await uploaderCloudinary(
+          req.files.avatar.tempFilePath
+        );
+
+        // START ============ Save to public directory
+        // createFolderImg('/public/img/avatar');
+        // if (checkExistUser[0].avatar && checkExistUser[0].avatar.length > 10) {
+        //   fs.unlink(
+        //     path.join(path.dirname(''), `/${checkExistUser[0].avatar}`)
+        //   );
+        // }
+        // const fileName = uuidv4() + path.extname(req.files.avatar.name);
+        // const savePath = path.join(
+        //   path.dirname(''),
+        //   '/public/img/avatar',
+        //   fileName
+        // );
+        // await req.files.avatar.mv(savePath);
+        // END ============= Save to public directory
+
+        data = { ...data, avatar: uploadImage.url };
       }
       const changeDataUser = await usersModel.updateUser(data, req.params.id);
       if (changeDataUser.affectedRows) {
         response(res, 'success', 200, 'successfully updated user data', data);
       }
     } else {
-      response(res, 'failed', 404, 'the data you want to update does not exist', []);
+      response(
+        res,
+        'failed',
+        404,
+        'the data you want to update does not exist',
+        []
+      );
     }
   } catch (error) {
     next(error);
@@ -320,23 +522,40 @@ const updateUser = async (req, res, next) => {
 
 const updatePassword = async (req, res, next) => {
   try {
-    const getDataUser = await usersModel.checkExistUser(req.userLogin.user_id, 'user_id');
+    const getDataUser = await usersModel.checkExistUser(
+      req.userLogin.user_id,
+      'user_id'
+    );
     if (getDataUser.length > 0) {
-      const comparePassword = await bcrypt.compare(req.body.old_password, getDataUser[0].password);
+      const comparePassword = await bcrypt.compare(
+        req.body.old_password,
+        getDataUser[0].password
+      );
       if (comparePassword) {
         const salt = await bcrypt.genSalt(10);
         const changePassword = await usersModel.updateUser(
           { password: await bcrypt.hash(req.body.new_password, salt) },
-          req.userLogin.user_id,
+          req.userLogin.user_id
         );
         if (changePassword.affectedRows) {
-          return response(res, 'success', 200, 'successfully updated user data');
+          return response(
+            res,
+            'success',
+            200,
+            'successfully updated user data'
+          );
         }
       } else {
         return response(res, 'failed', 403, "passwords isn't match", []);
       }
     } else {
-      return response(res, 'failed', 404, 'the data you want to update does not exist', []);
+      return response(
+        res,
+        'failed',
+        404,
+        'the data you want to update does not exist',
+        []
+      );
     }
   } catch (error) {
     next(error);
@@ -370,7 +589,9 @@ const readUser = async (req, res, next) => {
   try {
     let dataUsers;
     let pagination;
-    const lengthRecord = Object.keys(await usersModel.readUser(search, order, fieldOrder)).length;
+    const lengthRecord = Object.keys(
+      await usersModel.readUser(search, order, fieldOrder)
+    ).length;
     if (lengthRecord > 0) {
       const limit = req.query.limit || 5;
       const pages = Math.ceil(lengthRecord / limit);
@@ -397,8 +618,21 @@ const readUser = async (req, res, next) => {
         nextPage,
         prevPage,
       };
-      dataUsers = await usersModel.readUser(search, order, fieldOrder, start, limit);
-      responsePagination(res, 'success', 200, 'data users', dataUsers, pagination);
+      dataUsers = await usersModel.readUser(
+        search,
+        order,
+        fieldOrder,
+        start,
+        limit
+      );
+      responsePagination(
+        res,
+        'success',
+        200,
+        'data users',
+        dataUsers,
+        pagination
+      );
     } else {
       dataUsers = await usersModel.readUser(search, order, fieldOrder);
       response(res, 'success', 200, 'data users', dataUsers);

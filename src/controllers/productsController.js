@@ -3,8 +3,12 @@ const { v4: uuidv4 } = require('uuid');
 const fs = require('fs/promises');
 const productsModel = require('../models/productsModel');
 const {
-  responseError, response, createFolderImg, responsePagination,
+  responseError,
+  response,
+  createFolderImg,
+  responsePagination,
 } = require('../helpers/helpers');
+const cloudinary = require('../configs/cloudinary');
 
 const createProduct = async (req, res, next) => {
   try {
@@ -17,31 +21,59 @@ const createProduct = async (req, res, next) => {
       delivery_start_date: req.body.delivery_start_date,
       delivery_end_date: req.body.delivery_start_date,
     };
-    const checkExistDeliveries = await productsModel.checkDeliveries(req.body.delivery_id);
+    const checkExistDeliveries = await productsModel.checkDeliveries(
+      req.body.delivery_id
+    );
     const checkExistSizes = await productsModel.checkSizes(req.body.size_id);
-    const checkExistCategory = await productsModel.checkCategory(req.body.category_id);
+    const checkExistCategory = await productsModel.checkCategory(
+      req.body.category_id
+    );
+    // Upload to cloudinary
+    const uploaderCloudinary = async (path) =>
+      await cloudinary.uploads(path, 'Coffe Shop');
     if (
-      checkExistCategory.length > 0
-      && req.body.delivery_id.length === checkExistDeliveries.length
-      && req.body.size_id.length === checkExistSizes.length
+      checkExistCategory.length > 0 &&
+      req.body.delivery_id.length === checkExistDeliveries.length &&
+      req.body.size_id.length === checkExistSizes.length
     ) {
       if (req.files) {
         if (req.files.img_product) {
-          createFolderImg('/public/img/img_product');
-          const fileName = uuidv4() + path.extname(req.files.img_product.name);
-          const savePath = path.join(path.dirname(''), '/public/img/img_product', fileName);
-          data = { ...data, img_product: `public/img/img_product/${fileName}` };
-          await req.files.img_product.mv(savePath);
+          const uploadImage = await uploaderCloudinary(
+            req.files.img_product.tempFilePath
+          );
+          // START = Save to public directory
+          // createFolderImg('/public/img/img_product');
+          // const fileName = uuidv4() + path.extname(req.files.img_product.name);
+          // const savePath = path.join(
+          //   path.dirname(''),
+          //   '/public/img/img_product',
+          //   fileName
+          // );
+          // await req.files.img_product.mv(savePath);
+          // END = Save to public directory
+          data = { ...data, img_product: uploadImage.url };
         }
       }
       const insertProduct = await productsModel.insertProduct(data);
       if (insertProduct.affectedRows) {
-        await productsModel.insertDeliveryProduct(req.body.delivery_id, insertProduct.insertId);
-        await productsModel.insertSizeProduct(req.body.size_id, insertProduct.insertId);
+        await productsModel.insertDeliveryProduct(
+          req.body.delivery_id,
+          insertProduct.insertId
+        );
+        await productsModel.insertSizeProduct(
+          req.body.size_id,
+          insertProduct.insertId
+        );
         response(res, 'success', 200, 'successfully added product data', data);
       }
     } else {
-      responseError(res, 'Wrong data', 404, 'the data entered is not correct', {});
+      responseError(
+        res,
+        'Wrong data',
+        404,
+        'the data entered is not correct',
+        {}
+      );
     }
   } catch (error) {
     next(error);
@@ -57,18 +89,31 @@ const updateProduct = async (req, res, next) => {
       stock: req.body.stock,
       price: req.body.price,
     };
-    const checkExistDeliveries = await productsModel.checkDeliveries(req.body.delivery_id);
+    const checkExistDeliveries = await productsModel.checkDeliveries(
+      req.body.delivery_id
+    );
     const checkExistSizes = await productsModel.checkSizes(req.body.size_id);
-    const checkExistCategory = await productsModel.checkCategory(req.body.category_id);
-    const checkExistProduct = await productsModel.checkExistProduct(req.params.id, 'product_id');
+    const checkExistCategory = await productsModel.checkCategory(
+      req.body.category_id
+    );
+    const checkExistProduct = await productsModel.checkExistProduct(
+      req.params.id,
+      'product_id'
+    );
     if (checkExistProduct.length > 0) {
       if (
-        checkExistCategory.length > 0
-        && req.body.delivery_id.length === checkExistDeliveries.length
-        && req.body.size_id.length === checkExistSizes.length
+        checkExistCategory.length > 0 &&
+        req.body.delivery_id.length === checkExistDeliveries.length &&
+        req.body.size_id.length === checkExistSizes.length
       ) {
-        const dataSizeProduct = await productsModel.getSizeProduct(req.params.id, 'product_id');
-        const dataDeliveryProduct = await productsModel.getDeliveryProduct(req.params.id, 'product_id');
+        const dataSizeProduct = await productsModel.getSizeProduct(
+          req.params.id,
+          'product_id'
+        );
+        const dataDeliveryProduct = await productsModel.getDeliveryProduct(
+          req.params.id,
+          'product_id'
+        );
         const recentSizeProduct = [];
         const recentDeliveryProduct = [];
         let deleteSizeProduct = [];
@@ -76,45 +121,107 @@ const updateProduct = async (req, res, next) => {
         let deleteDeliveryProduct = [];
         let insertDeliveryProduct = [];
         dataSizeProduct.forEach((size) => recentSizeProduct.push(size.size_id));
-        dataDeliveryProduct.forEach((delivery) => recentDeliveryProduct.push(delivery.delivery_id));
+        dataDeliveryProduct.forEach((delivery) =>
+          recentDeliveryProduct.push(delivery.delivery_id)
+        );
+        // Upload to cloudinary
+        const uploaderCloudinary = async (path) =>
+          await cloudinary.uploads(path, 'Coffe Shop');
         if (Array.isArray(req.body.size_id)) {
-          deleteSizeProduct = recentSizeProduct.filter((x) => !req.body.size_id.includes(x));
-          insertSizeProduct = req.body.size_id.filter((x) => !recentSizeProduct.includes(x));
+          deleteSizeProduct = recentSizeProduct.filter(
+            (x) => !req.body.size_id.includes(x)
+          );
+          insertSizeProduct = req.body.size_id.filter(
+            (x) => !recentSizeProduct.includes(x)
+          );
         }
         if (Array.isArray(req.body.delivery_id)) {
-          deleteDeliveryProduct = recentDeliveryProduct.filter((x) => !req.body.delivery_id.includes(x));
-          insertDeliveryProduct = req.body.delivery_id.filter((x) => !recentDeliveryProduct.includes(x));
+          deleteDeliveryProduct = recentDeliveryProduct.filter(
+            (x) => !req.body.delivery_id.includes(x)
+          );
+          insertDeliveryProduct = req.body.delivery_id.filter(
+            (x) => !recentDeliveryProduct.includes(x)
+          );
         }
         if (deleteSizeProduct.length > 0) {
-          await productsModel.deleteSizeProduct(deleteSizeProduct, req.params.id);
+          await productsModel.deleteSizeProduct(
+            deleteSizeProduct,
+            req.params.id
+          );
         }
         if (insertSizeProduct.length > 0) {
-          await productsModel.insertSizeProduct(insertSizeProduct, req.params.id);
+          await productsModel.insertSizeProduct(
+            insertSizeProduct,
+            req.params.id
+          );
         }
         if (deleteDeliveryProduct.length > 0) {
-          await productsModel.deleteDeliveryProduct(deleteDeliveryProduct, req.params.id);
+          await productsModel.deleteDeliveryProduct(
+            deleteDeliveryProduct,
+            req.params.id
+          );
         }
         if (insertDeliveryProduct.length > 0) {
-          await productsModel.insertDeliveryProduct(insertDeliveryProduct, req.params.id);
+          await productsModel.insertDeliveryProduct(
+            insertDeliveryProduct,
+            req.params.id
+          );
         }
         if (req.files) {
           if (req.files.img_product) {
-            createFolderImg('/public/img/img_product');
-            if (checkExistProduct[0].img_product && checkExistProduct[0].img_product.length > 10) {
-              fs.unlink(path.join(path.dirname(''), `/${checkExistProduct[0].img_product}`));
-            }
-            const fileName = uuidv4() + path.extname(req.files.img_product.name);
-            const savePath = path.join(path.dirname(''), '/public/img/img_product', fileName);
-            data = { ...data, img_product: `public/img/img_product/${fileName}` };
-            await req.files.img_product.mv(savePath);
+            const uploadImage = await uploaderCloudinary(
+              req.files.img_product.tempFilePath
+            );
+            // START = Save to public directory
+            // createFolderImg('/public/img/img_product');
+            // if (
+            //   checkExistProduct[0].img_product &&
+            //   checkExistProduct[0].img_product.length > 10
+            // ) {
+            //   fs.unlink(
+            //     path.join(
+            //       path.dirname(''),
+            //       `/${checkExistProduct[0].img_product}`
+            //     )
+            //   );
+            // }
+            // const fileName =
+            //   uuidv4() + path.extname(req.files.img_product.name);
+            // const savePath = path.join(
+            //   path.dirname(''),
+            //   '/public/img/img_product',
+            //   fileName
+            // );
+            // END = Save to public directory
+
+            data = {
+              ...data,
+              img_product: uploadImage.url,
+            };
+            // await req.files.img_product.mv(savePath);
           }
         }
-        const changeDataProduct = await productsModel.updateProduct(data, req.params.id);
+        const changeDataProduct = await productsModel.updateProduct(
+          data,
+          req.params.id
+        );
         if (changeDataProduct.affectedRows) {
-          response(res, 'success', 200, 'successfully updated product data', {});
+          response(
+            res,
+            'success',
+            200,
+            'successfully updated product data',
+            {}
+          );
         }
       } else {
-        responseError(res, 'Wrong data', 404, 'the data entered is not correct', {});
+        responseError(
+          res,
+          'Wrong data',
+          404,
+          'the data entered is not correct',
+          {}
+        );
       }
     } else {
       responseError(res, 'Not found', 404, 'Product data not found', {});
@@ -126,16 +233,37 @@ const updateProduct = async (req, res, next) => {
 
 const deleteProduct = async (req, res, next) => {
   try {
-    const checkExistProduct = await productsModel.checkExistProduct(req.params.id, 'product_id');
-    const checkRealtion = await productsModel.checkRealtionOrderDetailsProduct(req.params.id);
+    const checkExistProduct = await productsModel.checkExistProduct(
+      req.params.id,
+      'product_id'
+    );
+    const checkRealtion = await productsModel.checkRealtionOrderDetailsProduct(
+      req.params.id
+    );
     if (checkExistProduct.length > 0) {
       if (checkRealtion.length === 0) {
-        const removeDataProduct = await productsModel.deleteProduct(req.params.id);
+        const removeDataProduct = await productsModel.deleteProduct(
+          req.params.id
+        );
         if (removeDataProduct.affectedRows) {
-          if (checkExistProduct[0].img_product && checkExistProduct[0].img_product.length > 10) {
-            fs.unlink(path.join(path.dirname(''), `/${checkExistProduct[0].img_product}`));
+          if (
+            checkExistProduct[0].img_product &&
+            checkExistProduct[0].img_product.length > 10
+          ) {
+            fs.unlink(
+              path.join(
+                path.dirname(''),
+                `/${checkExistProduct[0].img_product}`
+              )
+            );
           }
-          response(res, 'success', 200, 'successfully deleted product data', {});
+          response(
+            res,
+            'success',
+            200,
+            'successfully deleted product data',
+            {}
+          );
         }
       } else if (checkRealtion.length > 0) {
         responseError(
@@ -143,11 +271,17 @@ const deleteProduct = async (req, res, next) => {
           'data relation',
           409,
           'product data cannot be deleted because it is related to other data',
-          {},
+          {}
         );
       }
     } else {
-      responseError(res, 'failed', 404, 'the data you want to delete does not exist', {});
+      responseError(
+        res,
+        'failed',
+        404,
+        'the data you want to delete does not exist',
+        {}
+      );
     }
   } catch (error) {
     next(error);
@@ -181,7 +315,9 @@ const readProduct = async (req, res, next) => {
   try {
     let dataProducts;
     let pagination;
-    const lengthRecord = Object.keys(await productsModel.readProduct(search, order, fieldOrder)).length;
+    const lengthRecord = Object.keys(
+      await productsModel.readProduct(search, order, fieldOrder)
+    ).length;
     if (lengthRecord > 0) {
       const limit = req.query.limit || 5;
       const pages = Math.ceil(lengthRecord / limit);
@@ -208,8 +344,21 @@ const readProduct = async (req, res, next) => {
         nextPage,
         prevPage,
       };
-      dataProducts = await productsModel.readProduct(search, order, fieldOrder, start, limit);
-      responsePagination(res, 'success', 200, 'data products', dataProducts, pagination);
+      dataProducts = await productsModel.readProduct(
+        search,
+        order,
+        fieldOrder,
+        start,
+        limit
+      );
+      responsePagination(
+        res,
+        'success',
+        200,
+        'data products',
+        dataProducts,
+        pagination
+      );
     } else {
       dataProducts = await productsModel.readProduct(search, order, fieldOrder);
       response(res, 'success', 200, 'data products', dataProducts);
@@ -221,11 +370,20 @@ const readProduct = async (req, res, next) => {
 
 const detailProduct = async (req, res, next) => {
   try {
-    const checkExistProduct = await productsModel.checkExistProduct(req.params.id, 'product_id');
+    const checkExistProduct = await productsModel.checkExistProduct(
+      req.params.id,
+      'product_id'
+    );
     const dataSize = await productsModel.getAllProductSize(req.params.id);
-    const dataDelivery = await productsModel.getAllProductDelivery(req.params.id);
+    const dataDelivery = await productsModel.getAllProductDelivery(
+      req.params.id
+    );
     if (checkExistProduct.length > 0) {
-      const dataProduct = { ...checkExistProduct[0], size: dataSize, delivery: dataDelivery };
+      const dataProduct = {
+        ...checkExistProduct[0],
+        size: dataSize,
+        delivery: dataDelivery,
+      };
       response(res, 'Detail product', 200, 'Detail product', dataProduct);
     } else {
       responseError(res, 'Not found', 404, 'Data product not found', {});
@@ -265,7 +423,12 @@ const readProductByCategory = async (req, res, next) => {
       let dataProducts;
       let pagination;
       const lengthRecord = Object.keys(
-        await productsModel.readProductByCategory(req.params.id, search, order, fieldOrder),
+        await productsModel.readProductByCategory(
+          req.params.id,
+          search,
+          order,
+          fieldOrder
+        )
       ).length;
       if (lengthRecord > 0) {
         const limit = req.query.limit || 5;
@@ -299,12 +462,30 @@ const readProductByCategory = async (req, res, next) => {
           order,
           fieldOrder,
           start,
-          limit,
+          limit
         );
-        responsePagination(res, 'success', 200, 'data products by category', dataProducts, pagination);
+        responsePagination(
+          res,
+          'success',
+          200,
+          'data products by category',
+          dataProducts,
+          pagination
+        );
       } else {
-        dataProducts = await productsModel.readProductByCategory(req.params.id, search, order, fieldOrder);
-        response(res, 'success', 200, 'data products by category', dataProducts);
+        dataProducts = await productsModel.readProductByCategory(
+          req.params.id,
+          search,
+          order,
+          fieldOrder
+        );
+        response(
+          res,
+          'success',
+          200,
+          'data products by category',
+          dataProducts
+        );
       }
     } else {
       responseError(res, 'Not found', 404, 'Data category not found', {});
