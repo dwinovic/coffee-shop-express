@@ -5,7 +5,7 @@
     <img src="https://res.cloudinary.com/dnv-images/image/upload/v1631954966/Coffe%20Shop/coffe_copy_huh6kh.png" alt="Logo" width="180" height="180">
   </a>
 
-  <h3 align="center">RESTful API for Coffe Shop</h3>
+  <h3 align="center">Backend Application for Coffee Shop</h3>
 
   <p align="center">
     Coffee Shop is a Foods & Beverages ordering application. <br /> This apps give you (customers) some features to order your favorite foods or beverages. 
